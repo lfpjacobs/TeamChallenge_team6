@@ -4,7 +4,7 @@ from numpy import zeros
 from numpy import ones
 from numpy.random import randint
 from matplotlib import pyplot
-
+from augmentation import augment
 
 # load and prepare training images
 def load_real_samples(filename):
@@ -53,17 +53,17 @@ def summarize_performance(step, g_model, dataset, n_samples=3):
     for i in range(n_samples):
         pyplot.subplot(3, n_samples, 1 + i)
         pyplot.axis('off')
-        pyplot.imshow(np.squeeze(X_realA[i])) #########################
+        pyplot.imshow(np.squeeze(X_realA[i])) # Squeeze is needed to plot a "3D" image (3rd dimension is 1)
 	# plot generated target image
     for i in range(n_samples):
         pyplot.subplot(3, n_samples, 1 + n_samples + i)
         pyplot.axis('off')
-        pyplot.imshow(np.squeeze(X_fakeB[i])) #########################
+        pyplot.imshow(np.squeeze(X_fakeB[i]))
 	# plot real target image
     for i in range(n_samples):
         pyplot.subplot(3, n_samples, 1 + n_samples*2 + i)
         pyplot.axis('off')
-        pyplot.imshow(np.squeeze(X_realB[i])) #########################
+        pyplot.imshow(np.squeeze(X_realB[i]))
 	# save plot to file
     filename1 = 'plot_%06d.png' % (step+1)
     pyplot.savefig(filename1)
@@ -77,14 +77,28 @@ def summarize_performance(step, g_model, dataset, n_samples=3):
 def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
 	# determine the output square shape of the discriminator
     n_patch = d_model.output_shape[1]
-	#
+	
+        
     trainA, trainB = dataset
 	# calculate the number of batches per training epoch
-    bat_per_epo = int(len(trainA) / n_batch)
+    bat_per_epo = int(len(trainA) / n_batch) # for us: 22
 	# calculate the number of training iterations
-    n_steps = bat_per_epo * n_epochs
-	# manually enumerate epochs
+    n_steps = bat_per_epo * n_epochs # for us: 2200
+	
+    # manually enumerate epochs
     for i in range(n_steps):
+        
+        if (i) % (bat_per_epo) == 0: # per epoch
+            for j in range(len(trainA)):
+                # Augment every image randomely per epoch (prevents memory problems since you're overwriting)
+                trainA[j], trainB[j] = augment(trainA[j], trainB[j])
+            
+            # The following can be used to look how the augmentation works
+            #imgA = Image.fromarray(trainA[0].reshape((256,256))) # look at first rat only
+            #imgB = Image.fromarray(trainB[0].reshape((256,256)))
+            #imgA.save(r'C:\Users\20166218\Documents\Master\Q3\Team Challenge\day0 - step {}.tiff'.format(i))
+            #imgB.save(r'C:\Users\20166218\Documents\Master\Q3\Team Challenge\day4 - step {}.tiff'.format(i))
+            
         # select a batch of real samples
         [X_realA, X_realB], y_real = generate_real_samples(dataset, n_batch, n_patch)
         # generate a batch of fake samples

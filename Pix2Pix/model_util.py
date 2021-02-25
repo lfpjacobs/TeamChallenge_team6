@@ -104,7 +104,8 @@ def define_generator(image_shape=(256,256,3)):
     d5 = decoder_block(d4, e3, 256, dropout=False)
     d6 = decoder_block(d5, e2, 128, dropout=False)
     d7 = decoder_block(d6, e1, 64, dropout=False)
-	########################################################################### changed to 1 ipv 3
+    
+	# Changed the 1 below from 3 (gray ipv RGB)
     g = Conv2DTranspose(1, (4,4), strides=(2,2), padding='same', kernel_initializer=init)(d7)
     out_image = Activation('tanh')(g)
 	# define model
