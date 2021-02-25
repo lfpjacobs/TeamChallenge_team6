@@ -78,20 +78,26 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
 	# determine the output square shape of the discriminator
     n_patch = d_model.output_shape[1]
 	
+    n_aug = 5 # number of augmentations per epoch (so after step 22*5=110, i.e. epoch 1, the images are freshly augmented)
+    # value of 5 is just for ease of testing
+    # 22 training images, n_aug = 2 --> 44 (newly augmented) training images each epoch
         
     trainA, trainB = dataset
 	# calculate the number of batches per training epoch
-    bat_per_epo = int(len(trainA) / n_batch) # for us: 22
+    bat_per_epo = int(len(trainA)*n_aug / n_batch) # for us: 22*n_aug
 	# calculate the number of training iterations
-    n_steps = bat_per_epo * n_epochs # for us: 2200
-	
+    n_steps = bat_per_epo * n_epochs # for us: 2200*n_aug
+	    
     # manually enumerate epochs
     for i in range(n_steps):
-        
-        if (i) % (bat_per_epo) == 0: # per epoch
-            for j in range(len(trainA)):
-                # Augment every image randomely per epoch (prevents memory problems since you're overwriting)
-                trainA[j], trainB[j] = augment(trainA[j], trainB[j])
+        if (i) % (bat_per_epo) == 0: # per epoch "refresh" training set with new augmentations 
+            A_list, B_list = [], []
+            for n in range(n_aug):
+                for j in range(len(trainA)):
+                    # Augment every image randomely per epoch (prevents memory problems since you're overwriting)
+                    trainA_aug, trainB_aug = augment(trainA[j], trainB[j])
+                    A_list.append(trainA_aug)
+                    B_list.append(trainB_aug)
             
             # The following can be used to look how the augmentation works
             #imgA = Image.fromarray(trainA[0].reshape((256,256))) # look at first rat only
@@ -99,8 +105,10 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
             #imgA.save(r'C:\Users\20166218\Documents\Master\Q3\Team Challenge\day0 - step {}.tiff'.format(i))
             #imgB.save(r'C:\Users\20166218\Documents\Master\Q3\Team Challenge\day4 - step {}.tiff'.format(i))
             
+        dataset_aug = [np.array(A_list), np.array(B_list)]
+        
         # select a batch of real samples
-        [X_realA, X_realB], y_real = generate_real_samples(dataset, n_batch, n_patch)
+        [X_realA, X_realB], y_real = generate_real_samples(dataset_aug, n_batch, n_patch)
         # generate a batch of fake samples
         X_fakeB, y_fake = generate_fake_samples(g_model, X_realA, n_patch)
         # update discriminator for real samples
@@ -113,4 +121,4 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
         print('>%d, d1[%.3f] d2[%.3f] g[%.3f]' % (i+1, d_loss1, d_loss2, g_loss))
         # summarize model performance
         if (i+1) % (bat_per_epo * 10) == 0:
-            summarize_performance(i, g_model, dataset)
+            summarize_performance(i, g_model, dataset_aug)
