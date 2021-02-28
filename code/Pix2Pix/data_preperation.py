@@ -10,7 +10,6 @@ def data_prep(path_day0, path_day4):
     """
     
     # All 22 images are just used for training for now
-    # TODO: @Sjors Ff kijken of dit niet omgewisseld is
     src_images, tar_images = [], []
     
     for filename in os.listdir(path_day0):
@@ -27,7 +26,7 @@ def data_prep(path_day0, path_day4):
         # which we can explore as well
         
         img = np.float32(background[:,:,10:11]) # random slice (2D problem for now)
-        src_images.append(img)
+        tar_images.append(img)
        
     for filename in os.listdir(path_day4):
         f = os.path.join(path_day4, filename)
@@ -38,7 +37,7 @@ def data_prep(path_day0, path_day4):
         background[:224, :224, :] = np.transpose(img, (0,2,1))
         
         img = np.float32(background[:,:,10:11])
-        tar_images.append(img)
+        src_images.append(img)
     
     src_list = np.array(src_images)
     tar_list = np.array(tar_images)
