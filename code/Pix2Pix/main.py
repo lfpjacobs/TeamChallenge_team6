@@ -2,6 +2,7 @@ from data_preperation import data_prep
 from model_util import define_discriminator, define_generator, define_gan
 from train_util import train
 
+# TODO: @Sjors Fatsoenlijke pipeline in elkaar flansen
 
 #%% LOAD DATA AND MODELS
 

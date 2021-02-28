@@ -10,7 +10,7 @@ def data_prep(path_day0, path_day4):
     """
     
     # All 22 images are just used for training for now
-    
+    # TODO: @Sjors Ff kijken of dit niet omgewisseld is
     src_images, tar_images = [], []
     
     for filename in os.listdir(path_day0):

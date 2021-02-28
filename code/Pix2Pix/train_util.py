@@ -13,6 +13,7 @@ def load_real_samples(filename):
 	# unpack arrays
     X1, X2 = data['arr_0'], data['arr_1']
 	# scale from [0,255] to [-1,1]
+    # ToDo: @Bas Ff kijken naar of dit de goeie intensiteitsrange is --> Standardisation functie inbouwen
     X1 = (X1 - 127.5) / 127.5
     X2 = (X2 - 127.5) / 127.5
     return [X1, X2]
@@ -75,6 +76,8 @@ def summarize_performance(step, g_model, dataset, n_samples=3):
 
 # train pix2pix model
 def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
+    # TODO: @Bas Aanpassen van evt. variablene (zoals n_aug)
+
 	# determine the output square shape of the discriminator
     n_patch = d_model.output_shape[1]
 	

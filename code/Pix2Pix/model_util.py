@@ -12,6 +12,8 @@ from keras.layers import BatchNormalization
 
 
 def define_discriminator(image_shape):
+    # TODO: @Bas Evt. aanpassen van architectuur / parameters
+
 	# weight initialization
     init = RandomNormal(stddev=0.02)
 	# source image input
@@ -81,6 +83,8 @@ def decoder_block(layer_in, skip_in, n_filters, dropout=True):
 
 # define the standalone generator model
 def define_generator(image_shape=(256,256,3)):
+    # TODO: @Bas Evt. aanpassen van architectuur / parameters
+
 	# weight initialization
     init = RandomNormal(stddev=0.02)
 	# image input
@@ -126,6 +130,8 @@ def define_gan(g_model, d_model, image_shape):
     dis_out = d_model([in_src, gen_out])
 	# src image as input, generated image and classification output
     model = Model(in_src, [dis_out, gen_out])
+
+    # TODO: @Bas Ff kijken naar optimizer parameters
 	# compile model
     opt = Adam(lr=0.0002, beta_1=0.5)
     model.compile(loss=['binary_crossentropy', 'mae'], optimizer=opt, loss_weights=[1,100])
