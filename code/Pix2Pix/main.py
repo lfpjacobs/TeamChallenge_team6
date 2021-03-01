@@ -5,6 +5,16 @@ from model_util import define_discriminator, define_generator, define_gan
 from train_util import train
 from eval_util import eval
 
+# Fix memory error for gpu runs
+import tensorflow as tf
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+  try:
+    for gpu in gpus:
+      tf.config.experimental.set_memory_growth(gpu, True)
+  except RuntimeError as e:
+    print(e)
+
 
 def main():
     """
