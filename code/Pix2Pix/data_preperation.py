@@ -78,4 +78,4 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
 
 
 if __name__ == "__main__":
-    [src_array, tar_array] = data_prep("data\\preprocessed\\", True, "test")
+    [src_array, tar_array] = data_prep(os.path.join("data","preprocessed"), True, "test")
