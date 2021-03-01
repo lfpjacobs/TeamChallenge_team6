@@ -6,7 +6,7 @@ from glob import glob
 import random
 
 
-def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, random_seed=0.12345):
+def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, random_seed=1234):
     """
     Main data preperation function.
     Note that currently, all training data is stored in memory. TODO: Might want to do this differently after upscaling
@@ -21,11 +21,11 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
     subjectDirs = glob(os.path.join(datadir, "rat*"))
 
     if split_dataset:
-        random.shuffle(subjectDirs, random=random_seed)
+        random.Random(random_seed).shuffle(subjectDirs)
         if train_or_test.lower() == "train":
-            subjectDirs = subjectDirs[:(len(subjectDirs)+1)//split_factor]
+            subjectDirs = subjectDirs[:int(len(subjectDirs)*split_factor + 1)]
         elif train_or_test.lower() == "test":
-            subjectDirs = subjectDirs[(len(subjectDirs)+1)//split_factor:]
+            subjectDirs = subjectDirs[int(len(subjectDirs)*split_factor + 1):]
         else:
             raise ValueError("train_or_test parameter should be either 'train' or 'test'")
     elif not split_dataset:
@@ -78,4 +78,4 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
 
 
 if __name__ == "__main__":
-    [src_array, tar_array] = data_prep("data\\preprocessed\\")
+    [src_array, tar_array] = data_prep("data\\preprocessed\\", True, "test")

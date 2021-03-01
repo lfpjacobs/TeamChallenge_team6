@@ -4,23 +4,29 @@ from train_util import train
 
 # TODO: @Sjors Fatsoenlijke pipeline in elkaar flansen
 
-#%% LOAD DATA AND MODELS
+def main():
+    """
+    Main function for the pipeline used for model training and result prediction
+    """
 
-# Manually copy the day0 and day4 DWI images into two seperate folders
-path_day0 = "C:\\Users\\20166218\\Documents\\Master\\Q3\\Team Challenge\\Image analysis\\Data\\DWI\\day0" 
-path_day4 = "C:\\Users\\20166218\\Documents\\Master\\Q3\\Team Challenge\\Image analysis\\Data\\DWI\\day4"
+    # Load data
+    dataDir = "data\\preprocessed\\"
+    dataset_train = data_prep(dataDir, True, "train")
+    dataset_test = data_prep(dataDir, True, "test")
 
-dataset = data_prep(path_day0, path_day4)
-image_shape = dataset[0].shape[1:]
+    image_shape = dataset_train[0].shape[1:]
 
-# Define the models
-d_model = define_discriminator(image_shape)
-g_model = define_generator(image_shape)
+    # Define the models
+    d_model = define_discriminator(image_shape)
+    g_model = define_generator(image_shape)
 
-# Define the composite model
-gan_model = define_gan(g_model, d_model, image_shape)
+    # Define the composite model
+    gan_model = define_gan(g_model, d_model, image_shape)
 
+    ## TRAIN MODEL
+    train(d_model, g_model, gan_model, dataset)
 
-#%% TRAIN MODEL
+    return
 
-train(d_model, g_model, gan_model, dataset)
+if __name__ == "__main__":
+    main()
