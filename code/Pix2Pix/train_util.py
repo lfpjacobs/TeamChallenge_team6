@@ -131,5 +131,5 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
         # summarize performance
         print('>%d, d1[%.3f] d2[%.3f] g[%.3f]' % (i+1, d_loss1, d_loss2, g_loss))
         # summarize model performance
-        if (i+1) % (bat_per_epo * 10) == 0:
+        if (i+1) % (bat_per_epo) == 0:
             summarize_performance(i, g_model, dataset_aug, modelsDir)
