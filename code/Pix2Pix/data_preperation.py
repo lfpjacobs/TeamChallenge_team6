@@ -65,12 +65,15 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
         
         print("Completed")
     
-    # Shuffle slices and then store them in numpy arrays
-    random.shuffle(src_images)
-    random.shuffle(tar_images)
+    # Shuffle slices (coherently) and then store them in numpy arrays
+    indices = list(range(len(src_images)))
+    random.shuffle(indices)
 
-    src_array = np.array(src_images)
-    tar_array = np.array(tar_images)
+    src_images_shuffled = [src_images[i] for i in indices]
+    tar_images_shuffled = [tar_images[i] for i in indices]
+
+    src_array = np.array(src_images_shuffled)
+    tar_array = np.array(tar_images_shuffled)
 
     print(f"\nCompleted data extraction!\nFound a total of {len(src_images)} slices")
     
