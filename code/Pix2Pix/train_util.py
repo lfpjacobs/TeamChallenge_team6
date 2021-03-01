@@ -72,7 +72,7 @@ def summarize_performance(step, g_model, dataset, modelsDir, n_samples=3):
     pyplot.savefig(filename1)
     pyplot.close()
 	# save the generator model
-    filename2 = os.path.join(modelsDir,'g_model_{:06d}.png'.format((step+1)))
+    filename2 = os.path.join(modelsDir,'g_model_{:06d}.h5'.format((step+1)))
     g_model.save(filename2)
     print('>Saved: %s and %s' % (filename1, filename2))
 
