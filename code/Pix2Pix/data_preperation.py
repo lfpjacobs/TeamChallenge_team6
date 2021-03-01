@@ -2,44 +2,80 @@ import os
 import numpy as np
 import nibabel as nib
 from keras.preprocessing.image import img_to_array
+from glob import glob
+import random
 
-def data_prep(path_day0, path_day4):
+
+def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, random_seed=0.12345):
     """
-    Input paths to dwi images of day0 and day4
-    list of source and target images are returned
+    Main data preperation function.
+    Note that currently, all training data is stored in memory. TODO: Might want to do this differently after upscaling
+    Additionally, the model is trained on 2D slices of the data. TODO: Might want to do this differently
+    Also, only DWI-B0 images are taken into account.
     """
-    
-    # All 22 images are just used for training for now
+
+    # Predefine lists for the source and target images
     src_images, tar_images = [], []
     
-    for filename in os.listdir(path_day0):
-        f = os.path.join(path_day0, filename)
-        img = nib.load(f)
-        img = img_to_array(img.dataobj)
+    # Define required path and (if applicable) make a division for train/test sets
+    subjectDirs = glob(os.path.join(datadir, "rat*"))
+
+    if split_dataset:
+        random.shuffle(subjectDirs, random=random_seed)
+        if train_or_test.lower() == "train":
+            subjectDirs = subjectDirs[:(len(subjectDirs)+1)//split_factor]
+        elif train_or_test.lower() == "test":
+            subjectDirs = subjectDirs[(len(subjectDirs)+1)//split_factor:]
+        else:
+            raise ValueError("train_or_test parameter should be either 'train' or 'test'")
+    elif not split_dataset:
+        pass
+    else:
+        raise ValueError("split_dataset should be either True or False")
+
+    # Iteratively loop over subjects and extract data
+    for subject_n in range(len(subjectDirs)):
+
+        subjectDir = subjectDirs[subject_n]
+        print(f"Extracting data for subject '{os.path.split(subjectDir)[-1]}' ({subject_n+1}/{len(subjectDirs)})...\t", end="")
+
+        img_src = nib.load(os.path.join(subjectDir, "day0_img.nii.gz"))
+        img_tar = nib.load(os.path.join(subjectDir, "day4_img.nii.gz"))
+
+        img_src = img_to_array(img_src.dataobj)
+        img_tar = img_to_array(img_tar.dataobj)
+
+        # Padding images to 256x256 size and transposing axes. Assuming ori image shape to be (244,25,244).
+        # Final image shape will thus be 256,256,25
+        img_src = np.transpose(img_src, (0,2,1))
+        img_tar = np.transpose(img_tar, (0,2,1))
+
+        ori_x, ori_y, ori_z = np.shape(img_src)
+        new_x, new_y, new_z = (256, 256, ori_z)
+
+        img_src_pad = img_tar_pad = np.zeros((new_x, new_y, new_z))
+
+        img_src_pad[(new_x-ori_x)//2:ori_x+(new_x-ori_x)//2, (new_y-ori_y)//2:ori_y+(new_y-ori_y)//2, :] = img_src[:]
+        img_tar_pad[(new_x-ori_x)//2:ori_x+(new_x-ori_x)//2, (new_y-ori_y)//2:ori_y+(new_y-ori_y)//2, :] = img_tar[:]
+
+        # Add individual slices to image lists
+        for slice_i in range(new_z):
+            src_images.append(img_src_pad[:,:,slice_i])
+            tar_images.append(img_tar_pad[:,:,slice_i])
         
-        # I got dimensionality errors when using 224x224 images, so I added a 
-        # background to let our images have the same dimensionality as theirs 
-        # (must possibly be a multiple of 2?)
-        background = np.zeros((256,256,25))
-        background[:224, :224, :] = np.transpose(img, (0,2,1))
-        # gryds (used for augmentation) has implemented different border modes 
-        # which we can explore as well
-        
-        img = np.float32(background[:,:,10:11]) # random slice (2D problem for now)
-        tar_images.append(img)
-       
-    for filename in os.listdir(path_day4):
-        f = os.path.join(path_day4, filename)
-        img = nib.load(f)
-        img = img_to_array(img.dataobj)
-       
-        background = np.zeros((256,256,25))
-        background[:224, :224, :] = np.transpose(img, (0,2,1))
-        
-        img = np.float32(background[:,:,10:11])
-        src_images.append(img)
+        print("Completed")
     
-    src_list = np.array(src_images)
-    tar_list = np.array(tar_images)
+    # Shuffle slices and then store them in numpy arrays
+    random.shuffle(src_images)
+    random.shuffle(tar_images)
+
+    src_array = np.array(src_images)
+    tar_array = np.array(tar_images)
+
+    print(f"\nCompleted data extraction!\nFound a total of {len(src_images)} slices")
     
-    return [src_list, tar_list]
+    return [src_array, tar_array]
+
+
+if __name__ == "__main__":
+    [src_array, tar_array] = data_prep("data\\preprocessed\\")
