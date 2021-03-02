@@ -350,7 +350,9 @@ MigrationBackup/
 .ionide/
 
 # Custom
-/data
-/FSL_results
 /.vscode
-models
+/models/*
+/data/*
+
+!/models/README.txt
+!/data/README.txt
