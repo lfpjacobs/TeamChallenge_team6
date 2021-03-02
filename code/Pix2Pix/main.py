@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from data_preperation import data_prep
+from preprocessing import preprocess_data
 from model_util import define_discriminator, define_generator, define_gan
 from train_util import train
 from eval_util import eval
@@ -21,25 +22,45 @@ def main():
     Main function for the pipeline used for model training and result prediction
     """
 
+    # Define data directory
+    dataDir = os.path.join("..", "..", "data")
+
+    # Preprocess data
+    print("Step 0: Preprocessing data...\t", end="")
+    preprocess_data(dataDir)
+    print("Completed!\n")
+
     # Load data
-    dataDir = os.path.join("..", "..", "data", "preprocessed")
-    dataset_train = data_prep(dataDir, True, "train")
-    dataset_test = data_prep(dataDir, True, "test")
+    print("Step 1: Loading and extracting data...\n")
+
+    print("Dataset - TRAIN")
+    dataset_train = data_prep(os.path.join(dataDir, "preprocessed"), True, "train")
+    print("Dataset - TEST")
+    dataset_test = data_prep(os.path.join(dataDir, "preprocessed"), True, "test")
 
     image_shape = dataset_train[0].shape[1:]
     image_shape = (image_shape[0], image_shape[1], 1)
-    
+
+    print("Completed data loading!\n")
+
     # Define the models
+    print("Step 2: Defining models")
     d_model = define_discriminator(image_shape)
     g_model = define_generator(image_shape)
 
     gan_model = define_gan(g_model, d_model, image_shape)
 
-    # Train model
-    train(d_model, g_model, gan_model, dataset_train)
+    print("Defining models completed!\n")
 
-    # Evaluate model
+    # # Train model
+    print("Step 3: Training")
+    train(d_model, g_model, gan_model, dataset_train)
+    print("Training completed!\n")
+
+    # # Evaluate model
+    print("Step 4: Evaluation")
     eval(d_model, g_model, gan_model, dataset_test)
+    print("Evaluation completed!\n")
 
     return
 
