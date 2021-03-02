@@ -83,7 +83,7 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
     # Extract current time for model/plot save files (TODO: We've really gotta use TensorBoard for this later on)
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d_%H-%M-%S")
-    modelsDir = os.path.join("models", f"run_{current_time}")
+    modelsDir = os.path.join("..", "..", "models", f"run_{current_time}")
     os.mkdir(modelsDir)
 
 	# determine the output square shape of the discriminator
