@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from numpy import load
 from numpy import zeros
@@ -5,6 +6,7 @@ from numpy import ones
 from numpy.random import randint
 from matplotlib import pyplot
 from augmentation import augment
+from datetime import datetime
 
 # load and prepare training images
 def load_real_samples(filename):
@@ -41,7 +43,7 @@ def generate_fake_samples(g_model, samples, patch_shape):
 
 
 # generate samples and save as a plot and save the model
-def summarize_performance(step, g_model, dataset, n_samples=3):
+def summarize_performance(step, g_model, dataset, modelsDir, n_samples=3):
 	# select a sample of input images
     [X_realA, X_realB], _ = generate_real_samples(dataset, n_samples, 1)
 	# generate a batch of fake samples
@@ -66,17 +68,23 @@ def summarize_performance(step, g_model, dataset, n_samples=3):
         pyplot.axis('off')
         pyplot.imshow(np.squeeze(X_realB[i]))
 	# save plot to file
-    filename1 = 'plot_%06d.png' % (step+1)
+    filename1 = os.path.join(modelsDir,'plot_{:06d}.png'.format((step+1)))
     pyplot.savefig(filename1)
     pyplot.close()
 	# save the generator model
-    filename2 = 'model_%06d.h5' % (step+1)
+    filename2 = os.path.join(modelsDir,'g_model_{:06d}.h5'.format((step+1)))
     g_model.save(filename2)
     print('>Saved: %s and %s' % (filename1, filename2))
 
 # train pix2pix model
-def train(d_model, g_model, gan_model, dataset, n_epochs=1, n_batch=1):
+def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
     # TODO: @Bas Aanpassen van evt. variablene (zoals n_aug)
+    
+    # Extract current time for model/plot save files (TODO: We've really gotta use TensorBoard for this later on)
+    now = datetime.now()
+    current_time = now.strftime("%Y-%m-%d_%H-%M-%S")
+    modelsDir = os.path.join("models", f"run_{current_time}")
+    os.mkdir(modelsDir)
 
 	# determine the output square shape of the discriminator
     n_patch = d_model.output_shape[1]
@@ -123,5 +131,5 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=1, n_batch=1):
         # summarize performance
         print('>%d, d1[%.3f] d2[%.3f] g[%.3f]' % (i+1, d_loss1, d_loss2, g_loss))
         # summarize model performance
-        if (i+1) % (bat_per_epo * 10) == 0:
-            summarize_performance(i, g_model, dataset_aug)
+        if (i+1) % (bat_per_epo) == 0:
+            summarize_performance(i, g_model, dataset_aug, modelsDir) 
