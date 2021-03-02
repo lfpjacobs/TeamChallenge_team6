@@ -78,7 +78,7 @@ def summarize_performance(step, g_model, dataset, modelsDir, n_samples=3):
 
 # train pix2pix model
 def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
-    # TODO: @Bas Aanpassen van evt. variablene (zoals n_aug)
+    # TODO: @Luuk, Implementeren van TensorBoard checkpointing
     
     # Extract current time for model/plot save files (TODO: We've really gotta use TensorBoard for this later on)
     now = datetime.now()
@@ -115,7 +115,8 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
             #imgB = Image.fromarray(trainB[0].reshape((256,256)))
             #imgA.save(r'C:\Users\20166218\Documents\Master\Q3\Team Challenge\day0 - step {}.tiff'.format(i))
             #imgB.save(r'C:\Users\20166218\Documents\Master\Q3\Team Challenge\day4 - step {}.tiff'.format(i))
-            
+
+        # TODO: Implement coherent shuffling
         dataset_aug = [np.array(A_list), np.array(B_list)]
         
         # select a batch of real samples

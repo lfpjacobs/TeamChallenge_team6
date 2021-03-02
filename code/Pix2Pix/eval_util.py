@@ -1,4 +1,4 @@
-# TODO: Create evaluation functions
+# TODO: @Bas, Create evaluation functions
 
 def eval(d_model, g_model, gan_model, dataset):
 

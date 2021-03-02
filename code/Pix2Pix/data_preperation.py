@@ -14,6 +14,8 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
     Also, only DWI-B0 images are taken into account.
     """
 
+    # TODO: @Sjors, Implement brain cropping
+
     # Predefine lists for the source and target images
     src_images, tar_images = [], []
     

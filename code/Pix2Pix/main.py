@@ -39,7 +39,6 @@ def main():
     train(d_model, g_model, gan_model, dataset_train)
 
     # Evaluate model
-    # TODO: Create evaluation functions
     eval(d_model, g_model, gan_model, dataset_test)
 
     return

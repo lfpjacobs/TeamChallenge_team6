@@ -131,7 +131,7 @@ def define_gan(g_model, d_model, image_shape):
 	# src image as input, generated image and classification output
     model = Model(in_src, [dis_out, gen_out])
 
-    # TODO: @Bas Ff kijken naar optimizer parameters
+    # TODO: @Roos, kijken naar de loss weights en loss function in general
 	# compile model
     opt = Adam(lr=0.0002, beta_1=0.5)
     model.compile(loss=['binary_crossentropy', 'mae'], optimizer=opt, loss_weights=[1,100])
