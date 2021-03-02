@@ -13,7 +13,7 @@ def preprocess_data(datadir):
     # Define current data locations
     rawDir = os.path.join(dataDir, "raw")
     fslDir = os.path.join(dataDir, "FSL_results")
-
+    print(glob(os.path.join(rawDir, "rat*_dwib0_1_n3.nii.gz")))
     day0_images = glob(os.path.join(rawDir, "rat*_dwib0_1_n3.nii.gz"))
     day4_images = glob(os.path.join(fslDir, "rat*", "n3_flirt.nii.gz"))
     day0_masks = glob(os.path.join(rawDir, "rat*_adc1f.nii.gz"))
@@ -30,7 +30,6 @@ def preprocess_data(datadir):
     # Create needed directories and copy files into appropriate locations
     if not os.path.isdir(newDir):
         os.mkdir(newDir)
-    
     for i in range(len(day0_images_new)):
         # Check whether subject directory exists and create it if not
         subjectDir = os.path.dirname(day0_images_new[i])
