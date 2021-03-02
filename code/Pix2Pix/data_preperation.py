@@ -53,7 +53,8 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
         ori_x, ori_y, ori_z = np.shape(img_src)
         new_x, new_y, new_z = (256, 256, ori_z)
 
-        img_src_pad = img_tar_pad = np.zeros((new_x, new_y, new_z))
+        img_src_pad = np.zeros((new_x, new_y, new_z))
+        img_tar_pad = np.zeros((new_x, new_y, new_z))
 
         img_src_pad[(new_x-ori_x)//2:ori_x+(new_x-ori_x)//2, (new_y-ori_y)//2:ori_y+(new_y-ori_y)//2, :] = img_src[:]
         img_tar_pad[(new_x-ori_x)//2:ori_x+(new_x-ori_x)//2, (new_y-ori_y)//2:ori_y+(new_y-ori_y)//2, :] = img_tar[:]
@@ -81,4 +82,4 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
 
 
 if __name__ == "__main__":
-    [src_array, tar_array] = data_prep(os.path.join("data","preprocessed"), True, "test")
+    [src_array, tar_array] = data_prep(os.path.join("data","preprocessed"), True, "train")
