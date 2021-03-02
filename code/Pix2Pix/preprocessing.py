@@ -16,7 +16,7 @@ def preprocess_data(datadir):
     
     day0_images = glob(os.path.join(rawDir, "rat*_dwib0_1_n3.nii.gz"))
     day4_images = glob(os.path.join(fslDir, "rat*", "n3_flirt.nii.gz"))
-    day0_masks = glob(os.path.join(rawDir, "rat*_adc1f.nii.gz"))
+    day0_masks = glob(os.path.join(rawDir, "rat*_adc1f_lesionmask.nii.gz"))
     day4_masks = glob(os.path.join(fslDir, "rat*", "mask_flirt.nii.gz"))
 
     # Define new data locations
