@@ -20,24 +20,25 @@ def preprocess_data(datadir):
     day4_masks = glob(os.path.join(fslDir, "rat*", "mask_flirt.nii.gz"))
 
     # Define new data locations
-    newDir = os.path.join(dataDir, "preprocessed\\")
+    newDir = os.path.join(dataDir, "preprocessed")
 
-    day0_images_new = [newDir+os.path.split(old_path)[-1][:5]+"\\day0_img.nii.gz" for old_path in day0_images]
-    day4_images_new = [newDir+os.path.split(os.path.dirname(old_path))[-1]+"\\day4_img.nii.gz" for old_path in day4_images]
-    day0_masks_new = [newDir+os.path.split(old_path)[-1][:5]+"\\day0_mask.nii.gz" for old_path in day0_masks]
-    day4_masks_new = [newDir+os.path.split(os.path.dirname(old_path))[-1]+"\\day4_mask.nii.gz" for old_path in day4_masks]
+    day0_images_new = [os.path.join(newDir, os.path.split(old_path)[-1][:5], "day0_img.nii.gz") for old_path in day0_images]
+    day4_images_new = [os.path.join(newDir, os.path.split(os.path.dirname(old_path))[-1], "day4_img.nii.gz") for old_path in day4_images]
+    day0_masks_new = [os.path.join(newDir, os.path.split(old_path)[-1][:5], "day0_mask.nii.gz") for old_path in day0_masks]
+    day4_masks_new = [os.path.join(newDir, os.path.split(os.path.dirname(old_path))[-1], "day4_mask.nii.gz") for old_path in day4_masks]
 
     # Create needed directories and copy files into appropriate locations
     if not os.path.isdir(newDir):
         os.mkdir(newDir)
-    for i in range(len(day0_images_new)):
-        # Check whether subject directory exists and create it if not
-        subjectDir = os.path.dirname(day0_images_new[i])
 
+    # Check whether subject directory exists and create it if not
+    for i in range(len(day0_images_new)):
+        subjectDir = os.path.dirname(day0_images_new[i])
         if not os.path.isdir(subjectDir):
             os.mkdir(subjectDir)
-        
-        # Iteratively copy all files into the new subject directory
+
+    # Iteratively copy all files into the new subject directory
+    for i in range(len(day0_images_new)):
         copyfile(day0_images[i], day0_images_new[i])
         copyfile(day4_images[i], day4_images_new[i])
         copyfile(day0_masks[i], day0_masks_new[i])
@@ -48,5 +49,6 @@ def preprocess_data(datadir):
 
     return True
 
+
 if __name__ == '__main__':
-    preprocess_data("data\\")
+    preprocess_data(os.path.join("..", "..", "data"))

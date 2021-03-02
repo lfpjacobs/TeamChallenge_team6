@@ -78,10 +78,14 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
     src_array = np.array(src_images_shuffled)
     tar_array = np.array(tar_images_shuffled)
 
-    print(f"\nCompleted data extraction!\nFound a total of {len(src_images)} slices")
+    if len(src_images) > 0:
+        print(f"\nCompleted data extraction!\nFound a total of {len(src_images)} slices")
+        if not len(src_images) == len(tar_images) : raise ValueError("There aren't as many source as target images. Check for missing files.")
+    else:
+        raise ValueError("The selected data directory doesn't contain any properly formatted data")
     
     return [src_array, tar_array]
 
 
 if __name__ == "__main__":
-    [src_array, tar_array] = data_prep(os.path.join("data","preprocessed"), True, "train")
+    [src_array, tar_array] = data_prep(os.path.join("..", "..", "data","preprocessed"), True, "train")

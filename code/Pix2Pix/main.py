@@ -22,7 +22,7 @@ def main():
     """
 
     # Load data
-    dataDir = os.path.join("data","preprocessed")
+    dataDir = os.path.join("..", "..", "data", "preprocessed")
     dataset_train = data_prep(dataDir, True, "train")
     dataset_test = data_prep(dataDir, True, "test")
 
