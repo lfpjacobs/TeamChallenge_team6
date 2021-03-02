@@ -13,7 +13,7 @@ def preprocess_data(datadir):
     # Define current data locations
     rawDir = os.path.join(dataDir, "raw")
     fslDir = os.path.join(dataDir, "FSL_results")
-    print(glob(os.path.join(rawDir, "rat*_dwib0_1_n3.nii.gz")))
+    
     day0_images = glob(os.path.join(rawDir, "rat*_dwib0_1_n3.nii.gz"))
     day4_images = glob(os.path.join(fslDir, "rat*", "n3_flirt.nii.gz"))
     day0_masks = glob(os.path.join(rawDir, "rat*_adc1f.nii.gz"))
