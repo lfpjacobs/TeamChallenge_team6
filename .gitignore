@@ -353,6 +353,8 @@ MigrationBackup/
 /.vscode
 /models/*
 /data/*
+/logs/*
 
 !/models/README.txt
 !/data/README.txt
+!/logs/README.txt

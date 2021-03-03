@@ -53,7 +53,7 @@ def main():
 
     # # Train model
     print("Step 3: Training")
-    train(d_model, g_model, gan_model, dataset_train, run=1)
+    train(d_model, g_model, gan_model, dataset_train)
     print("Training completed!\n")
 
     # # Evaluate model

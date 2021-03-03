@@ -15,7 +15,7 @@ def load_real_samples(filename):
 	# unpack arrays
     X1, X2 = data['arr_0'], data['arr_1']
 	# scale from [0,255] to [-1,1]
-    # ToDo: @Bas Ff kijken naar of dit de goeie intensiteitsrange is --> Standardisation functie inbouwen
+    # TODO: @Bas Ff kijken naar of dit de goeie intensiteitsrange is --> Standardisation functie inbouwen
     X1 = (X1 - 127.5) / 127.5
     X2 = (X2 - 127.5) / 127.5
     return [X1, X2]
@@ -75,12 +75,16 @@ def summarize_performance(step, g_model, dataset, modelsDir, logger, run, n_samp
     logger.log_images('run_{}_step{}'.format(run, step), [X_realA[0], X_fakeB[0], X_realB[0]], step)   
 
 # train pix2pix model
-def train(d_model, g_model, gan_model, dataset, run, n_epochs=100, n_batch=1):    
-    # Extract current time for model/plot save files (TODO: We've really gotta use TensorBoard for this later on)
+def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):    
+    # Extract current time for model/plot save files
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d_%H-%M-%S")
+
     modelsDir = os.path.join("..", "..", "models", f"run_{current_time}")
     os.mkdir(modelsDir)
+
+    logsDir = os.path.join("..", "..", "logs", f"run_{current_time}")
+    os.mkdir(logsDir)
 
 	# determine the output square shape of the discriminator
     n_patch = d_model.output_shape[1]
@@ -96,10 +100,10 @@ def train(d_model, g_model, gan_model, dataset, run, n_epochs=100, n_batch=1):
     n_steps = bat_per_epo * n_epochs # for us: 2200*n_aug
 	  
     # need three seperate loggers for the three scalar losses
-    logger_g = Logger('C:/Users/20166218/Documents/Master/Q3/Team Challenge/Image analysis/Pix2Pix_new/log/run{}_gen'.format(run))
-    logger_d1 = Logger('C:/Users/20166218/Documents/Master/Q3/Team Challenge/Image analysis/Pix2Pix_new/log/run{}_dis1'.format(run))
-    logger_d2 = Logger('C:/Users/20166218/Documents/Master/Q3/Team Challenge/Image analysis/Pix2Pix_new/log/run{}_dis2'.format(run))
-    logger_im = Logger('C:/Users/20166218/Documents/Master/Q3/Team Challenge/Image analysis/Pix2Pix_new/log/run{}_im'.format(run))
+    logger_g = Logger(os.path.join(logsDir, "gen"))
+    logger_d1 = Logger(os.path.join(logsDir, "dis1"))
+    logger_d2 = Logger(os.path.join(logsDir, "dis2"))
+    logger_im = Logger(os.path.join(logsDir, "im"))
     
     # manually enumerate epochs
     for i in range(n_steps):
@@ -129,13 +133,13 @@ def train(d_model, g_model, gan_model, dataset, run, n_epochs=100, n_batch=1):
         print('>%d, d1[%.3f] d2[%.3f] g[%.3f]' % (i+1, d_loss1, d_loss2, g_loss))
         # summarize model performance
         if (i+1) % (bat_per_epo) == 0:
-            summarize_performance(i, g_model, dataset_aug, modelsDir, logger_im, run)
+            summarize_performance(i, g_model, dataset_aug, modelsDir, logger_im, current_time)
         
         # seperate folder, same names --> three losses in same figure
-        logger_g.log_scalar('run_{}'.format(run), g_loss, i)
-        logger_d1.log_scalar('run_{}'.format(run), d_loss1, i)
-        logger_d2.log_scalar('run_{}'.format(run), d_loss2, i)        
+        logger_g.log_scalar('run_{}'.format(current_time), g_loss, i)
+        logger_d1.log_scalar('run_{}'.format(current_time), d_loss1, i)
+        logger_d2.log_scalar('run_{}'.format(current_time), d_loss2, i)        
         
         # type the following into your prompt: 
-        # tensorboard --logdir "C:/Users/20166218/Documents/Master/Q3/Team Challenge/Image analysis/Pix2Pix_new/log"
+        # tensorboard --logdir "logs"
         # and go to http://localhost:6006/
