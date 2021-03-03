@@ -93,7 +93,7 @@ def optimalize_offsets(img, old_size, crop_size, importance_map):
     return best_offsets, z_offset
 
 
-def crop_brain(src_img, tar_img, subject_n, importance_map, crop_size=(128, 128, 25)):
+def crop_brain(src_img, tar_img, subject_name, importance_map, crop_size=(128, 128, 25)):
     """
     This function crops the input images to a specified size and maximizes
     the presence of brain tissue in the bounding box.
@@ -116,23 +116,27 @@ def crop_brain(src_img, tar_img, subject_n, importance_map, crop_size=(128, 128,
     src_img_res = scipy.ndimage.zoom(src_img_crop, (old_size[0]//crop_size[0], old_size[1]//crop_size[1], 1), order=1)
     tar_img_res = scipy.ndimage.zoom(tar_img_crop, (old_size[0]//crop_size[0], old_size[1]//crop_size[1], 1), order=1)
 
+    # Flip images into a more readable format
+    src_img_res = np.flip(src_img_res.swapaxes(0, 1), axis=0)
+    tar_img_res = np.flip(tar_img_res.swapaxes(0, 1), axis=0)
+
     # Make and save figures for debugging purposes
     # Source image
     for i in range(crop_size[2]):
         plt.subplot(int(np.sqrt(crop_size[2]))+1, int(np.sqrt(crop_size[2]))+1 , 1+i)
         plt.axis('off')
-        plt.imshow(src_img_res[:,:,i])
+        plt.imshow(src_img_res[:,:,i], cmap='gray')
     
-    plt.savefig(os.path.join("..", "..", "data", "preprocessed", "brain_extraction",  f"cropped_src_{subject_n}.png"))
+    plt.savefig(os.path.join("..", "..", "data", "preprocessed", "brain_extraction",  f"cropped_src_{subject_name}.png"))
     plt.close()
 
     # Target image
     for i in range(crop_size[2]):
         plt.subplot(int(np.sqrt(crop_size[2]))+1, int(np.sqrt(crop_size[2]))+1 , 1+i)
         plt.axis('off')
-        plt.imshow(tar_img_res[:,:,i])
+        plt.imshow(tar_img_res[:,:,i], cmap='gray')
     
-    plt.savefig(os.path.join("..", "..", "data", "preprocessed", "brain_extraction",  f"cropped_tar_{subject_n}.png"))
+    plt.savefig(os.path.join("..", "..", "data", "preprocessed", "brain_extraction",  f"cropped_tar_{subject_name}.png"))
     plt.close()
 
     return [src_img_res, tar_img_res]
@@ -199,7 +203,7 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
         img_tar_pad[(new_x-ori_x)//2:ori_x+(new_x-ori_x)//2, (new_y-ori_y)//2:ori_y+(new_y-ori_y)//2, :] = img_tar[:]
 
         # Now, crop the images to remove unnecessary empty space
-        [img_src_crop, img_tar_crop] = crop_brain(img_src_pad, img_tar_pad, subject_n, importance_map, crop_size)
+        [img_src_crop, img_tar_crop] = crop_brain(img_src_pad, img_tar_pad, os.path.split(subjectDir)[-1], importance_map, crop_size)
 
         # Add individual slices to image lists 
         for slice_i in range(crop_size[2]):

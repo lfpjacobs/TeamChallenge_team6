@@ -56,17 +56,17 @@ def summarize_performance(step, g_model, dataset, modelsDir, n_samples=3):
     for i in range(n_samples):
         pyplot.subplot(3, n_samples, 1 + i)
         pyplot.axis('off')
-        pyplot.imshow(np.squeeze(X_realA[i])) # Squeeze is needed to plot a "3D" image (3rd dimension is 1)
+        pyplot.imshow(np.squeeze(X_realA[i]), cmap='gray') # Squeeze is needed to plot a "3D" image (3rd dimension is 1)
 	# plot generated target image
     for i in range(n_samples):
         pyplot.subplot(3, n_samples, 1 + n_samples + i)
         pyplot.axis('off')
-        pyplot.imshow(np.squeeze(X_fakeB[i]))
+        pyplot.imshow(np.squeeze(X_fakeB[i]), cmap='gray')
 	# plot real target image
     for i in range(n_samples):
         pyplot.subplot(3, n_samples, 1 + n_samples*2 + i)
         pyplot.axis('off')
-        pyplot.imshow(np.squeeze(X_realB[i]))
+        pyplot.imshow(np.squeeze(X_realB[i]), cmap='gray')
 	# save plot to file
     filename1 = os.path.join(modelsDir,'plot_{:06d}.png'.format((step+1)))
     pyplot.savefig(filename1)
