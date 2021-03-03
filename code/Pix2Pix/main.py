@@ -51,12 +51,12 @@ def main():
 
     print("Defining models completed!\n")
 
-    # # Train model
+    # Train model
     print("Step 3: Training")
     train(d_model, g_model, gan_model, dataset_train)
     print("Training completed!\n")
 
-    # # Evaluate model
+    # Evaluate model
     print("Step 4: Evaluation")
     eval(d_model, g_model, gan_model, dataset_test)
     print("Evaluation completed!\n")
