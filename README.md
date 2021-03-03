@@ -16,6 +16,8 @@ Github repository for TUe/UU MIx Team Challenge - team 6
 |          -- referencecat / * 
 | 
 |--- models / * 
+|
+|--- log / *
 | 
 |--- .gitignore 
 |--- LICENCE 
