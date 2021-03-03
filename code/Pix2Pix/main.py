@@ -1,5 +1,4 @@
 import os
-import numpy as np
 from data_preperation import data_prep
 from preprocessing import preprocess_data
 from model_util import define_discriminator, define_generator, define_gan
@@ -54,7 +53,7 @@ def main():
 
     # # Train model
     print("Step 3: Training")
-    train(d_model, g_model, gan_model, dataset_train)
+    train(d_model, g_model, gan_model, dataset_train, run=1)
     print("Training completed!\n")
 
     # # Evaluate model
