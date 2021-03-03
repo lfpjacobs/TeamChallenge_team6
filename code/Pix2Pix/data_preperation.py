@@ -182,8 +182,8 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
         subjectDir = subjectDirs[subject_n]
         print(f"Extracting data for subject '{os.path.split(subjectDir)[-1]}' ({subject_n+1}/{len(subjectDirs)})...\t", end="")
 
-        img_src = nib.load(os.path.join(subjectDir, "day0_img.nii.gz"))
-        img_tar = nib.load(os.path.join(subjectDir, "day4_img.nii.gz"))
+        img_src = nib.load(os.path.join(subjectDir, "day4_img.nii.gz"))
+        img_tar = nib.load(os.path.join(subjectDir, "day0_img.nii.gz"))
 
         img_src = img_to_array(img_src.dataobj)
         img_tar = img_to_array(img_tar.dataobj)
