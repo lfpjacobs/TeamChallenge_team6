@@ -1,12 +1,13 @@
 import os
 import numpy as np
+import tensorflow as tf
 from numpy import load
 from numpy import zeros
 from numpy import ones
 from numpy.random import randint
-from matplotlib import pyplot
 from augmentation import augment
 from datetime import datetime
+
 
 # load and prepare training images
 def load_real_samples(filename):
@@ -41,9 +42,23 @@ def generate_fake_samples(g_model, samples, patch_shape):
     y = zeros((len(X), patch_shape, patch_shape, 1))
     return X, y
 
+# create a logging object to log scalar losses and images to Tensorboard
+class Logger(object):
+    def __init__(self, log_dir):
+        self.writer = tf.summary.create_file_writer(log_dir)
+
+    def log_scalar(self, tag, value, step):
+        with self.writer.as_default():
+            tf.summary.scalar(tag, value, step=step)
+            self.writer.flush()
+    
+    def log_images(self, tag, images, step):
+        with self.writer.as_default():
+              tf.summary.image(tag, np.asarray(images), max_outputs=len(images), step=step)
+              self.writer.flush()
 
 # generate samples and save as a plot and save the model
-def summarize_performance(step, g_model, dataset, modelsDir, n_samples=3):
+def summarize_performance(step, g_model, dataset, modelsDir, logger, run, n_samples=3):
 	# select a sample of input images
     [X_realA, X_realB], _ = generate_real_samples(dataset, n_samples, 1)
 	# generate a batch of fake samples
@@ -52,38 +67,24 @@ def summarize_performance(step, g_model, dataset, modelsDir, n_samples=3):
     X_realA = (X_realA + 1) / 2.0
     X_realB = (X_realB + 1) / 2.0
     X_fakeB = (X_fakeB + 1) / 2.0
-	# plot real source images
-    for i in range(n_samples):
-        pyplot.subplot(3, n_samples, 1 + i)
-        pyplot.axis('off')
-        pyplot.imshow(np.squeeze(X_realA[i]), cmap='gray') # Squeeze is needed to plot a "3D" image (3rd dimension is 1)
-	# plot generated target image
-    for i in range(n_samples):
-        pyplot.subplot(3, n_samples, 1 + n_samples + i)
-        pyplot.axis('off')
-        pyplot.imshow(np.squeeze(X_fakeB[i]), cmap='gray')
-	# plot real target image
-    for i in range(n_samples):
-        pyplot.subplot(3, n_samples, 1 + n_samples*2 + i)
-        pyplot.axis('off')
-        pyplot.imshow(np.squeeze(X_realB[i]), cmap='gray')
-	# save plot to file
-    filename1 = os.path.join(modelsDir,'plot_{:06d}.png'.format((step+1)))
-    pyplot.savefig(filename1)
-    pyplot.close()
+    
 	# save the generator model
-    filename2 = os.path.join(modelsDir,'g_model_{:06d}.h5'.format((step+1)))
-    g_model.save(filename2)
-    print('>Saved: %s and %s' % (filename1, filename2))
+    filename = os.path.join(modelsDir,'g_model_{:06d}.h5'.format((step+1)))
+    g_model.save(filename)
+    print('>Saved model: {}s'.format(filename))
+    
+    logger.log_images('run_{}_step{}'.format(run, step), [X_realA[0], X_fakeB[0], X_realB[0]], step)    
+   
 
 # train pix2pix model
-def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
-    # TODO: @Luuk, Implementeren van TensorBoard checkpointing
+def train(d_model, g_model, gan_model, dataset, run, n_epochs=100, n_batch=1):
+    # TODO: @Bas Aanpassen van evt. variablene (zoals n_aug)
     
-    # Extract current time for model/plot save files (TODO: We've really gotta use TensorBoard for this later on)
+    # Extract current time for model/plot save files
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d_%H-%M-%S")
-    modelsDir = os.path.join("..", "..", "models", f"run_{current_time}")
+    #modelsDir = os.path.join("models", f"run_{current_time}")
+    modelsDir = os.path.join("C:\\Users\\20166218\\Documents\\Master\\Q3\\Team Challenge\\Image analysis\\Pix2Pix_new\\models", f"run_{current_time}")
     os.mkdir(modelsDir)
 
 	# determine the output square shape of the discriminator
@@ -98,7 +99,14 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
     bat_per_epo = int(len(trainA)*n_aug / n_batch) # for us: 22*n_aug
 	# calculate the number of training iterations
     n_steps = bat_per_epo * n_epochs # for us: 2200*n_aug
-	    
+	 
+    # need three seperate loggers for the three scalar losses
+    logger_g = Logger('C:/Users/20166218/Documents/Master/Q3/Team Challenge/Image analysis/Pix2Pix_new/log/run{}_gen'.format(run))
+    logger_d1 = Logger('C:/Users/20166218/Documents/Master/Q3/Team Challenge/Image analysis/Pix2Pix_new/log/run{}_dis1'.format(run))
+    logger_d2 = Logger('C:/Users/20166218/Documents/Master/Q3/Team Challenge/Image analysis/Pix2Pix_new/log/run{}_dis2'.format(run))
+    
+    logger_im = Logger('C:/Users/20166218/Documents/Master/Q3/Team Challenge/Image analysis/Pix2Pix_new/log/run{}_im'.format(run))
+    
     # manually enumerate epochs
     for i in range(n_steps):
         if (i) % (bat_per_epo) == 0: # per epoch "refresh" training set with new augmentations 
@@ -110,14 +118,7 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
                     A_list.append(trainA_aug)
                     B_list.append(trainB_aug)
             
-            # The following can be used to look how the augmentation works
-            #imgA = Image.fromarray(trainA[0].reshape((256,256))) # look at first rat only
-            #imgB = Image.fromarray(trainB[0].reshape((256,256)))
-            #imgA.save(r'C:\Users\20166218\Documents\Master\Q3\Team Challenge\day0 - step {}.tiff'.format(i))
-            #imgB.save(r'C:\Users\20166218\Documents\Master\Q3\Team Challenge\day4 - step {}.tiff'.format(i))
-
-        # TODO: Implement coherent shuffling
-        dataset_aug = [np.array(A_list), np.array(B_list)]
+            dataset_aug = [np.array(A_list), np.array(B_list)]
         
         # select a batch of real samples
         [X_realA, X_realB], y_real = generate_real_samples(dataset_aug, n_batch, n_patch)
@@ -133,4 +134,13 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
         print('>%d, d1[%.3f] d2[%.3f] g[%.3f]' % (i+1, d_loss1, d_loss2, g_loss))
         # summarize model performance
         if (i+1) % (bat_per_epo) == 0:
-            summarize_performance(i, g_model, dataset_aug, modelsDir) 
+            summarize_performance(i, g_model, dataset_aug, modelsDir, logger_im, run) 
+        
+        # seperate folder, same names --> three losses in same figure
+        logger_g.log_scalar('run_{}'.format(run), g_loss, i)
+        logger_d1.log_scalar('run_{}'.format(run), d_loss1, i)
+        logger_d2.log_scalar('run_{}'.format(run), d_loss2, i)        
+        
+        # type the following into your prompt: 
+        # tensorboard --logdir "C:/Users/20166218/Documents/Master/Q3/Team Challenge/Image analysis/Pix2Pix_new/log"
+        # and go to http://localhost:6006/
