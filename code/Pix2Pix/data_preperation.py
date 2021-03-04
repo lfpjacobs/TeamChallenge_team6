@@ -149,9 +149,6 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
     Additionally, the model is trained on 2D slices of the data. TODO: Might want to do this differently
     Also, only DWI-B0 images are taken into account.
     """
-
-    # Predefine lists for the source and target images
-    src_images, tar_images = [], []
     
     # Define required path and (if applicable) make a division for train/test sets
     subjectDirs = glob(os.path.join(datadir, "rat*"))
@@ -217,9 +214,9 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
             
         print("Completed")
 
-    if len(src_images) > 0:
-        print(f"\nCompleted data extraction!\nFound a total of {len(src_images)} slices\n")
-        if not len(src_images) == len(tar_images) : raise ValueError("There aren't as many source as target images. Check for missing files.")
+    if np.shape(src_array)[2] > 0:
+        print(f"\nCompleted data extraction!\nFound a total of {np.shape(src_array)[2]} slices\n")
+        if not np.shape(src_array)[2] == np.shape(tar_array)[2] : raise ValueError("There aren't as many source as target images. Check for missing files.")
     else:
         raise ValueError("The selected data directory doesn't contain any properly formatted data")
     
