@@ -176,6 +176,10 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
     if not os.path.isdir((os.path.join("..", "..", "data", "preprocessed", "brain_extraction"))):
         os.mkdir((os.path.join("..", "..", "data", "preprocessed", "brain_extraction")))
 
+    # initialize data
+    src_array = np.zeros((len(subjectDirs)*crop_size[2], 256, 256))
+    tar_array = np.zeros((len(subjectDirs)*crop_size[2], 256, 256))
+    j = 0
     # Iteratively loop over subjects and extract data
     for subject_n in range(len(subjectDirs)):
 
@@ -207,20 +211,11 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
 
         # Add individual slices to image lists 
         for slice_i in range(crop_size[2]):
-            src_images.append(img_src_crop[:,:,slice_i])
-            tar_images.append(img_tar_crop[:,:,slice_i])
-        
+            src_array[j] = img_src_crop[:,:,slice_i]
+            tar_array[j] = img_tar_crop[:,:,slice_i]
+            j += 1
+            
         print("Completed")
-    
-    # Shuffle slices (coherently) and then store them in numpy arrays
-    indices = list(range(len(src_images)))
-    random.shuffle(indices)
-
-    src_images_shuffled = [src_images[i] for i in indices]
-    tar_images_shuffled = [tar_images[i] for i in indices]
-
-    src_array = np.array(src_images_shuffled)
-    tar_array = np.array(tar_images_shuffled)
 
     if len(src_images) > 0:
         print(f"\nCompleted data extraction!\nFound a total of {len(src_images)} slices\n")

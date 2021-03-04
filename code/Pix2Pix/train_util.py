@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
+import random
 from numpy import load
 from numpy import zeros
 from numpy import ones
@@ -53,8 +54,8 @@ class Logger(object):
     
     def log_images(self, tag, images, step):
         with self.writer.as_default():
-              tf.summary.image(tag, np.asarray(images), max_outputs=len(images), step=step)
-              self.writer.flush()
+            tf.summary.image(tag, np.asarray(images), max_outputs=len(images), step=step)
+            self.writer.flush()
               
 # generate samples and save as a plot and save the model
 def summarize_performance(step, g_model, dataset, modelsDir, logger, run, n_samples=3):
@@ -108,16 +109,23 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
     # manually enumerate epochs
     for i in range(n_steps):
         if (i) % (bat_per_epo) == 0: # per epoch "refresh" training set with new augmentations 
-            A_list, B_list = [], []
+            # initialize augmented dataset
+            A = np.zeros((len(trainA)*n_aug, 256, 256, 1))
+            B = np.zeros((len(trainA)*n_aug, 256, 256, 1))
+            # for shuffling of all slices
+            rand_i = list(range(len(trainA)*n_aug)) 
+            random.shuffle(rand_i) # unique list of random indices
+            k = 0
+            
             for n in range(n_aug):
                 for j in range(len(trainA)):
-                    # Augment every image randomely per epoch (prevents memory problems since you're overwriting)
+                    # Augment every image randomely per epoch
                     trainA_aug, trainB_aug = augment(trainA[j], trainB[j])
-                    A_list.append(trainA_aug)
-                    B_list.append(trainB_aug)
-            
-        # TODO: Implement coherent shuffling
-        dataset_aug = [np.array(A_list), np.array(B_list)]
+                    A[rand_i[k]] = trainA_aug
+                    B[rand_i[k]] = trainB_aug
+                    k += 1
+                    
+            dataset_aug = [A, B] # all trainingdata (day4 and day1)
         
         # select a batch of real samples
         [X_realA, X_realB], y_real = generate_real_samples(dataset_aug, n_batch, n_patch)
