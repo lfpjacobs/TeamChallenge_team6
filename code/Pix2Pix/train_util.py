@@ -63,10 +63,11 @@ def summarize_performance(step, g_model, dataset, modelsDir, logger, run, n_samp
     [X_realA, X_realB], _ = generate_real_samples(dataset, n_samples, 1)
 	# generate a batch of fake samples
     X_fakeB, _ = generate_fake_samples(g_model, X_realA, 1)
-	# scale all pixels from [-1,1] to [0,1]
-    X_realA = (X_realA + 1) / 2.0
-    X_realB = (X_realB + 1) / 2.0
-    X_fakeB = (X_fakeB + 1) / 2.0
+
+	# # scale all pixels from [-1,1] to [0,1] (depreciated)
+    # X_realA = (X_realA + 1) / 2.0
+    # X_realB = (X_realB + 1) / 2.0
+    # X_fakeB = (X_fakeB + 1) / 2.0
 	
 	# save the generator model
     filename = os.path.join(modelsDir,'g_model_{:06d}.h5'.format((step+1)))
@@ -108,7 +109,8 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
     
     # manually enumerate epochs
     for i in range(n_steps):
-        if (i) % (bat_per_epo) == 0: # per epoch "refresh" training set with new augmentations 
+        if (i) % (bat_per_epo) == 0: # per epoch "refresh" training set with new augmentations
+            print("Performing data augmentation... ", end="") 
             # initialize augmented dataset
             A = np.zeros((len(trainA)*n_aug, 256, 256, 1))
             B = np.zeros((len(trainA)*n_aug, 256, 256, 1))
@@ -126,6 +128,7 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
                     k += 1
                     
             dataset_aug = [A, B] # all trainingdata (day4 and day1)
+            print("Completed")
         
         # select a batch of real samples
         [X_realA, X_realB], y_real = generate_real_samples(dataset_aug, n_batch, n_patch)
