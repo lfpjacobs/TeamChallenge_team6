@@ -70,7 +70,7 @@ def summarize_performance(step, g_model, dataset, modelsDir, logger, run, n_samp
     # X_fakeB = (X_fakeB + 1) / 2.0
 	
 	# save the generator model
-    filename = os.path.join(modelsDir,'g_model_{:06d}.h5'.format((step+1)))
+    filename = os.path.join(modelsDir,'g_model_{:07d}.h5'.format((step+1)))
     g_model.save(filename)
     print('>Saved model: {}s'.format(filename))
     
@@ -91,7 +91,7 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
 	# determine the output square shape of the discriminator
     n_patch = d_model.output_shape[1]
 	
-    n_aug = 5 # number of augmentations per epoch (so after step 22*5=110, i.e. epoch 1, the images are freshly augmented)
+    n_aug = 20 # number of augmentations per epoch (so after step 22*5=110, i.e. epoch 1, the images are freshly augmented)
     # value of 5 is just for ease of testing
     # 22 training images, n_aug = 2 --> 44 (newly augmented) training images each epoch
         
