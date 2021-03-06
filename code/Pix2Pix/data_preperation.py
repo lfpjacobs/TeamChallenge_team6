@@ -55,8 +55,9 @@ def optimalize_offsets(img, old_size, crop_size, importance_map):
                 brainness = np.sum(patch * importance_map) - 5 * (img_sum - np.sum(patch))
             except ValueError:
                 y_start1 = 0
-                y_start2 = 0
+                y_start2 = crop_size[1]
                 patch = img[x_offset:crop_size[0]+x_offset, y_start1:y_start2, z_offset:crop_size[2]+z_offset]
+
                 brainness = np.sum(patch * importance_map) - 5 * (img_sum - np.sum(patch))
 
             if brainness > best_brainness:
@@ -142,6 +143,24 @@ def crop_brain(src_img, tar_img, subject_name, importance_map, crop_size=(128, 1
     return [src_img_res, tar_img_res]
 
 
+def histogram_equalization(img, number_bins=256):
+    """
+    This function performs histogram equalization.
+    It is used as a preprocessing step
+    """
+
+    # get image histogram
+    img_histogram, bins = np.histogram(img.flatten(), number_bins, density=True)
+    cdf = img_histogram.cumsum() # cumulative distribution function
+    cdf = 255 * cdf / cdf[-1] # normalize
+
+    # use linear interpolation of cdf to find new pixel values
+    img_equalized = np.interp(img.flatten(), bins[:-1], cdf)
+    img_equalized = (img_equalized - np.min(img_equalized)) / (np.max(img_equalized) - np.min(img_equalized))
+
+    return img_equalized.reshape(img.shape), cdf
+
+
 def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, random_seed=1234):
     """
     Main data preperation function.
@@ -203,8 +222,12 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
         img_src_pad[(new_x-ori_x)//2:ori_x+(new_x-ori_x)//2, (new_y-ori_y)//2:ori_y+(new_y-ori_y)//2, :] = img_src[:]
         img_tar_pad[(new_x-ori_x)//2:ori_x+(new_x-ori_x)//2, (new_y-ori_y)//2:ori_y+(new_y-ori_y)//2, :] = img_tar[:]
 
+        # Perform histogram equalization
+        img_src_eq, _ = histogram_equalization(img_src_pad)
+        img_tar_eq, _ = histogram_equalization(img_tar_pad)
+
         # Now, crop the images to remove unnecessary empty space
-        [img_src_crop, img_tar_crop] = crop_brain(img_src_pad, img_tar_pad, os.path.split(subjectDir)[-1], importance_map, crop_size)
+        [img_src_crop, img_tar_crop] = crop_brain(img_src_eq, img_tar_eq, os.path.split(subjectDir)[-1], importance_map, crop_size)
 
         # Add individual slices to image lists 
         for slice_i in range(crop_size[2]):
