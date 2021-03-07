@@ -200,7 +200,7 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
     for subject_n in range(len(subjectDirs)):
 
         subjectDir = subjectDirs[subject_n]
-        print(f"Extracting data for subject '{os.path.split(subjectDir)[-1]}' ({subject_n+1}/{len(subjectDirs)})...\t", end="")
+        print(f"Extracting data for subject '{os.path.split(subjectDir)[-1]}' ({subject_n+1}/{len(subjectDirs)})...\t", end="", flush=True)
 
         img_src = nib.load(os.path.join(subjectDir, "day4_img.nii.gz"))
         img_tar = nib.load(os.path.join(subjectDir, "day0_img.nii.gz"))

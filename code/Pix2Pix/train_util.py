@@ -110,7 +110,7 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
     # manually enumerate epochs
     for i in range(n_steps):
         if (i) % (bat_per_epo) == 0: # per epoch "refresh" training set with new augmentations
-            print("Performing data augmentation... ", end="") 
+            print("Performing data augmentation... ", end="", flush=True) 
             # initialize augmented dataset
             A = np.zeros((len(trainA)*n_aug, 256, 256, 1))
             B = np.zeros((len(trainA)*n_aug, 256, 256, 1))

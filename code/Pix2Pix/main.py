@@ -35,7 +35,7 @@ def main():
     dataDir = os.path.join("..", "..", "data")
 
     # Preprocess data
-    print("Step 0: Preprocessing data...\t", end="")
+    print("Step 0: Preprocessing data...\t", end="", flush=True)
     preprocess_data(dataDir)
     print("Completed!\n")
 
