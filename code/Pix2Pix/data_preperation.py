@@ -38,7 +38,7 @@ def optimalize_offsets(img, old_size, crop_size, importance_map):
 
     # Loop over possible offsets and determine the best one
     best_offsets = [0, 0]
-    img_sum = np.sum(img)
+    img_sum = np.sum(img[:, :, z_offset:crop_size[2]+z_offset])
 
     y_start1, y_start2 = ((old_size[1]-crop_size[1])//2, crop_size[1]+(old_size[1]-crop_size[1])//2)
     best_brainness = 0
@@ -186,7 +186,7 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
         raise ValueError("split_dataset should be either True or False")
 
     # Predifine some parameters needed for brain extraction
-    crop_size = (128, 128, 21)
+    crop_size = (128, 128, 3)
     importance_map = generate_importance_map(crop_size)
     # Make brain extraction visualisation directory
     if not os.path.isdir((os.path.join("..", "..", "data", "preprocessed", "brain_extraction"))):
