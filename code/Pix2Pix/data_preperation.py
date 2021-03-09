@@ -238,8 +238,8 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
         print("Completed")
 
     if np.shape(src_array)[2] > 0:
-        print(f"\nCompleted data extraction!\nFound a total of {np.shape(src_array)[2]} slices\n")
-        if not np.shape(src_array)[2] == np.shape(tar_array)[2] : raise ValueError("There aren't as many source as target images. Check for missing files.")
+        print(f"\nCompleted data extraction!\nFound a total of {np.shape(src_array)[0]} slices\n")
+        if not np.shape(src_array)[0] == np.shape(tar_array)[0] : raise ValueError("There aren't as many source as target images. Check for missing files.")
     else:
         raise ValueError("The selected data directory doesn't contain any properly formatted data")
     
