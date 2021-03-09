@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import os
 import nibabel as nib
 from keras.preprocessing.image import img_to_array
+from keras.models import load_model
+
 
 def getDSC(testImage, resultImage):    
     """
@@ -54,12 +56,18 @@ def get_maskDSC(subject_list, g_model, datadir):
     
     return DSC_scores
 
-def eval(d_model, g_model, gan_model, dataset):
+def eval(d_model, g_model, gan_model, dataset, specific_model=False):
     """"
     Evaluation function for trained GAN
     input: generator model & test set image pairs
     output: registered test images & DSC
     """
+    # load model, gebeurt nu niks mee, maar dit zou in functie parameters kunnen om een specifiek model te evalueren
+    if specific_model == True:
+        os.path.join("..", "..", "models")
+        g_model = load_model('g_model_0029400.h5') #hier iets verzinnen om simpel een model te kiezen (of in main)
+    
+    
     #Preprocess test set
     true_day4, true_day0 = dataset 
     
