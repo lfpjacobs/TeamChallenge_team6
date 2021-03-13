@@ -84,15 +84,18 @@ def summarize_performance(step, g_model, dataset_train, dataset_test, modelsDir,
     logger.log_images('run_{}_step{}_val'.format(run, step), [X_realA_test[0], X_fakeB_test[0], X_realB_test[0]], step)
 
 
-def check_similarity(g_model, dataset, n_samples=3):
+def check_mae(g_model, dataset, n_samples=3):
     # select a sample of input images
     [X_realA, X_realB], _ = generate_real_samples(dataset, n_samples, 1)
 	# generate a batch of fake samples
     X_fakeB, _ = generate_fake_samples(g_model, X_realA, 1)
 	
-    similarity = ssim(X_realB, X_fakeB)
+    mae = np.sum(np.absolute((X_realB.astype("float").flatten() - X_fakeB.astype("float").flatten()))) / np.size(X_realA)
+    mean = np.mean([X_realB, X_fakeB])
 
-    return similarity
+    mae_norm = 10 * mae / mean
+
+    return mae_norm
 
 # train pix2pix model
 def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100, n_batch=1):    
@@ -113,9 +116,20 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
     # value of 5 is just for ease of testing
     # 22 training images, n_aug = 2 --> 44 (newly augmented) training images each epoch
         
-    trainA, trainB = dataset_train
+    trainA_ori, trainB_ori = dataset_train
+    testA, testB = dataset_test
+
+    # Fix train- and test-dataset dimensionality issues
+    trainA = np.expand_dims(trainA_ori, axis=3)
+    trainB = np.expand_dims(trainB_ori, axis=3)
+    testA = np.expand_dims(testA, axis=3)
+    testB = np.expand_dims(testB, axis=3)
+
+    dataset_train = [trainA, trainB]
+    dataset_test = [testA, testB]
+
 	# calculate the number of batches per training epoch
-    bat_per_epo = int(len(trainA)*n_aug / n_batch) # for us: 22*n_aug
+    bat_per_epo = int(len(trainA_ori)*n_aug / n_batch) # for us: 22*n_aug
 	# calculate the number of training iterations
     n_steps = bat_per_epo * n_epochs # for us: 2200*n_aug
 	  
@@ -124,32 +138,32 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
     logger_d1 = Logger(os.path.join(logsDir, "dis1"))
     logger_d2 = Logger(os.path.join(logsDir, "dis2"))
     logger_im = Logger(os.path.join(logsDir, "im"))
-    logger_train = Logger(os.path.join(logsDir, "neg_sim_train"))
-    logger_val = Logger(os.path.join(logsDir, "neg_sim_val"))
+    logger_train = Logger(os.path.join(logsDir, "mae_norm_train"))
+    logger_val = Logger(os.path.join(logsDir, "mae_norm_val"))
     
     # manually enumerate epochs
     for i in range(n_steps):
         if (i) % (bat_per_epo) == 0: # per epoch "refresh" training set with new augmentations
             print("Performing data augmentation... ", end="", flush=True) 
             # initialize augmented dataset
-            A = np.zeros((len(trainA)*n_aug, 256, 256, 1))
-            B = np.zeros((len(trainA)*n_aug, 256, 256, 1))
+            A = np.zeros((len(trainA_ori)*n_aug, 256, 256, 1))
+            B = np.zeros((len(trainA_ori)*n_aug, 256, 256, 1))
             # for shuffling of all slices
-            rand_i = list(range(len(trainA)*n_aug)) 
+            rand_i = list(range(len(trainA_ori)*n_aug)) 
             random.shuffle(rand_i) # unique list of random indices
             k = 0
             
             for n in range(n_aug):
-                for j in range(len(trainA)):
+                for j in range(len(trainA_ori)):
                     # Augment every image randomely per epoch
-                    trainA_aug, trainB_aug = augment(trainA[j], trainB[j])
+                    trainA_aug, trainB_aug = augment(trainA_ori[j], trainB_ori[j])
                     A[rand_i[k]] = trainA_aug
                     B[rand_i[k]] = trainB_aug
                     k += 1
                     
             dataset_aug = [A, B] # all trainingdata (day4 and day1)
             print("Completed")
-        
+
         # select a batch of real samples
         [X_realA, X_realB], y_real = generate_real_samples(dataset_aug, n_batch, n_patch)
         # generate a batch of fake samples
@@ -168,15 +182,15 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
             summarize_performance(i, g_model, dataset_train, dataset_test, modelsDir, logger_im, current_time)
         
         # Store losses (tensorboard) 
-        if (i+1) % (bat_per_epo // 50):
+        if (i+1) % (bat_per_epo // 50) == 0:
             logger_g.log_scalar('run_{}'.format(current_time), g_loss, i)
             logger_d1.log_scalar('run_{}'.format(current_time), d_loss1, i)
             logger_d2.log_scalar('run_{}'.format(current_time), d_loss2, i)  
 
         # Store similarities (tensorboard)
-        if (i+1) % (bat_per_epo // 20):
-            neg_similarity_train = 2 - check_similarity(g_model, dataset_train, 5)
-            neg_similarity_val = 2 - check_similarity(g_model, dataset_test, 5)
+        if (i+1) % (bat_per_epo // 20) == 0:
+            neg_similarity_train = check_mae(g_model, dataset_train, 5)
+            neg_similarity_val = check_mae(g_model, dataset_test, 5)
 
             logger_train.log_scalar('run_{}'.format(current_time), neg_similarity_train, i)
             logger_val.log_scalar('run_{}'.format(current_time), neg_similarity_val, i)
