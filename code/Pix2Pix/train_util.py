@@ -2,6 +2,7 @@ import os
 import numpy as np
 import tensorflow as tf
 import random
+from skimage.metrics import structural_similarity as ssim
 from numpy import load
 from numpy import zeros
 from numpy import ones
@@ -58,11 +59,16 @@ class Logger(object):
             self.writer.flush()
               
 # generate samples and save as a plot and save the model
-def summarize_performance(step, g_model, dataset, modelsDir, logger, run, n_samples=3):
+def summarize_performance(step, g_model, dataset_train, dataset_test, modelsDir, logger, run, n_samples=3):
 	# select a sample of input images
-    [X_realA, X_realB], _ = generate_real_samples(dataset, n_samples, 1)
+    [X_realA_train, X_realB_train], _ = generate_real_samples(dataset_train, n_samples, 1)
 	# generate a batch of fake samples
-    X_fakeB, _ = generate_fake_samples(g_model, X_realA, 1)
+    X_fakeB_train, _ = generate_fake_samples(g_model, X_realA_train, 1)
+
+    # select a sample of input images
+    [X_realA_test, X_realB_test], _ = generate_real_samples(dataset_test, n_samples, 1)
+	# generate a batch of fake samples
+    X_fakeB_test, _ = generate_fake_samples(g_model, X_realA_test, 1)
 
 	# # scale all pixels from [-1,1] to [0,1] (depreciated)
     # X_realA = (X_realA + 1) / 2.0
@@ -74,10 +80,22 @@ def summarize_performance(step, g_model, dataset, modelsDir, logger, run, n_samp
     g_model.save(filename)
     print('>Saved model: {}s'.format(filename))
     
-    logger.log_images('run_{}_step{}'.format(run, step), [X_realA[0], X_fakeB[0], X_realB[0]], step)   
+    logger.log_images('run_{}_step{}_train'.format(run, step), [X_realA_train[0], X_fakeB_train[0], X_realB_train[0]], step)
+    logger.log_images('run_{}_step{}_val'.format(run, step), [X_realA_test[0], X_fakeB_test[0], X_realB_test[0]], step)
+
+
+def check_similarity(g_model, dataset, n_samples=3):
+    # select a sample of input images
+    [X_realA, X_realB], _ = generate_real_samples(dataset, n_samples, 1)
+	# generate a batch of fake samples
+    X_fakeB, _ = generate_fake_samples(g_model, X_realA, 1)
+	
+    similarity = ssim(X_realB, X_fakeB)
+
+    return similarity
 
 # train pix2pix model
-def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):    
+def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100, n_batch=1):    
     # Extract current time for model/plot save files
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d_%H-%M-%S")
@@ -95,17 +113,19 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
     # value of 5 is just for ease of testing
     # 22 training images, n_aug = 2 --> 44 (newly augmented) training images each epoch
         
-    trainA, trainB = dataset
+    trainA, trainB = dataset_train
 	# calculate the number of batches per training epoch
     bat_per_epo = int(len(trainA)*n_aug / n_batch) # for us: 22*n_aug
 	# calculate the number of training iterations
     n_steps = bat_per_epo * n_epochs # for us: 2200*n_aug
 	  
-    # need three seperate loggers for the three scalar losses
+    # Define loggers for losses, images and similarity metrics
     logger_g = Logger(os.path.join(logsDir, "gen"))
     logger_d1 = Logger(os.path.join(logsDir, "dis1"))
     logger_d2 = Logger(os.path.join(logsDir, "dis2"))
     logger_im = Logger(os.path.join(logsDir, "im"))
+    logger_train = Logger(os.path.join(logsDir, "neg_sim_train"))
+    logger_val = Logger(os.path.join(logsDir, "neg_sim_val"))
     
     # manually enumerate epochs
     for i in range(n_steps):
@@ -145,13 +165,22 @@ def train(d_model, g_model, gan_model, dataset, n_epochs=100, n_batch=1):
 
         # summarize model performance and store models
         if (i+1) % (bat_per_epo) == 0:
-            summarize_performance(i, g_model, dataset_aug, modelsDir, logger_im, current_time)
+            summarize_performance(i, g_model, dataset_train, dataset_test, modelsDir, logger_im, current_time)
         
         # Store losses (tensorboard) 
         if (i+1) % (bat_per_epo // 50):
             logger_g.log_scalar('run_{}'.format(current_time), g_loss, i)
             logger_d1.log_scalar('run_{}'.format(current_time), d_loss1, i)
-            logger_d2.log_scalar('run_{}'.format(current_time), d_loss2, i)        
+            logger_d2.log_scalar('run_{}'.format(current_time), d_loss2, i)  
+
+        # Store similarities (tensorboard)
+        if (i+1) % (bat_per_epo // 20):
+            neg_similarity_train = 2 - check_similarity(g_model, dataset_train, 5)
+            neg_similarity_val = 2 - check_similarity(g_model, dataset_test, 5)
+
+            logger_train.log_scalar('run_{}'.format(current_time), neg_similarity_train, i)
+            logger_val.log_scalar('run_{}'.format(current_time), neg_similarity_val, i)
+
             
         # type the following into your prompt: 
         # tensorboard --logdir "logs"
