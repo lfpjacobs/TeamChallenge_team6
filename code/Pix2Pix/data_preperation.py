@@ -164,8 +164,8 @@ def histogram_equalization(img, number_bins=256):
 def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, random_seed=1234):
     """
     Main data preperation function.
-    Note that currently, all training data is stored in memory. TODO: Might want to do this differently after upscaling
-    Additionally, the model is trained on 2D slices of the data. TODO: Might want to do this differently
+    Note that currently, all training data is stored in memory.
+    Additionally, the model is trained on 2D slices of the data.
     Also, only DWI-B0 images are taken into account.
     """
     

@@ -17,7 +17,6 @@ def load_real_samples(filename):
 	# unpack arrays
     X1, X2 = data['arr_0'], data['arr_1']
 	# scale from [0,255] to [-1,1]
-    # TODO: @Bas Ff kijken naar of dit de goeie intensiteitsrange is --> Standardisation functie inbouwen
     X1 = (X1 - 127.5) / 127.5
     X2 = (X2 - 127.5) / 127.5
     return [X1, X2]

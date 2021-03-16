@@ -22,7 +22,7 @@ def setup_tf_session():
   
   return len(gpus)
 
-
+# TODO: @Sjors, run through and bugfix the entire pipeline after changes.
 def main():
     """
     Main function for the pipeline used for model training and result prediction

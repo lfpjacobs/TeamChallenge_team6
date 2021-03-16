@@ -43,9 +43,6 @@ def preprocess_data(datadir):
         copyfile(day4_images[i], day4_images_new[i])
         copyfile(day0_masks[i], day0_masks_new[i])
         copyfile(day4_masks[i], day4_masks_new[i])
-    
-    # TODO: We might want to add some preprocessing steps here, but this is maybe something for later
-    # ...
 
     return True
 

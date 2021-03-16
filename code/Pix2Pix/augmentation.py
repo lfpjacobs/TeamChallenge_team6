@@ -2,6 +2,7 @@ import numpy as np
 import gryds # https://github.com/tueimage/gryds --> pip install git+https://github.com/tueimage/gryds
 import random
 
+# TODO: @Sjors, implement more augmentation, e.g. noise / L/R flip and more deformation/rotation.
 def augment(imA, imB):
     """
     Input day0 and day4 image of the same rat

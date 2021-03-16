@@ -1,4 +1,3 @@
-# TODO: @Bas, Create evaluation functions
 import scipy
 import matplotlib.pyplot as plt
 import os
@@ -6,6 +5,7 @@ import nibabel as nib
 from keras.preprocessing.image import img_to_array
 from keras.models import load_model
 
+# TODO: This code isn't functional yet. Need to take a look at this.
 
 def getDSC(testImage, resultImage):    
     """
