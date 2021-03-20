@@ -2,13 +2,13 @@ import os
 import numpy as np
 import tensorflow as tf
 import random
-from skimage.metrics import structural_similarity as ssim
 from numpy import load
 from numpy import zeros
 from numpy import ones
 from numpy.random import randint
 from augmentation import augment
 from datetime import datetime
+from skimage.metrics import structural_similarity
 
 # load and prepare training images
 def load_real_samples(filename):
@@ -68,11 +68,6 @@ def summarize_performance(step, g_model, dataset_train, dataset_test, modelsDir,
     [X_realA_test, X_realB_test], _ = generate_real_samples(dataset_test, n_samples, 1)
 	# generate a batch of fake samples
     X_fakeB_test, _ = generate_fake_samples(g_model, X_realA_test, 1)
-
-	# # scale all pixels from [-1,1] to [0,1] (depreciated)
-    # X_realA = (X_realA + 1) / 2.0
-    # X_realB = (X_realB + 1) / 2.0
-    # X_fakeB = (X_fakeB + 1) / 2.0
 	
 	# save the generator model
     filename = os.path.join(modelsDir,'g_model_{:07d}.h5'.format((step+1)))
@@ -83,18 +78,15 @@ def summarize_performance(step, g_model, dataset_train, dataset_test, modelsDir,
     logger.log_images('run_{}_step{}_val'.format(run, step), [X_realA_test[0], X_fakeB_test[0], X_realB_test[0]], step)
 
 
-def check_mae(g_model, dataset, n_samples=3):
+def check_ssim(g_model, dataset, n_samples=3):
     # select a sample of input images
     [X_realA, X_realB], _ = generate_real_samples(dataset, n_samples, 1)
 	# generate a batch of fake samples
     X_fakeB, _ = generate_fake_samples(g_model, X_realA, 1)
-	
-    mae = np.sum(np.absolute((X_realB.astype("float").flatten() - X_fakeB.astype("float").flatten()))) / np.size(X_realA)
-    mean = np.mean([X_realB, X_fakeB])
-
-    mae_norm = 10 * mae / mean
-
-    return mae_norm
+    
+    SSIM = structural_similarity(np.float32(X_realB.reshape(256,256)), X_fakeB.reshape(256,256))
+    
+    return SSIM
 
 # train pix2pix model
 def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100, n_batch=1):    
@@ -134,11 +126,12 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
 	  
     # Define loggers for losses, images and similarity metrics
     logger_g = Logger(os.path.join(logsDir, "gen"))
+    logger_ssim = Logger(os.path.join(logsDir, "ssim_loss"))
     logger_d1 = Logger(os.path.join(logsDir, "dis1"))
     logger_d2 = Logger(os.path.join(logsDir, "dis2"))
     logger_im = Logger(os.path.join(logsDir, "im"))
-    logger_train = Logger(os.path.join(logsDir, "mae_norm_train"))
-    logger_val = Logger(os.path.join(logsDir, "mae_norm_val"))
+    logger_train = Logger(os.path.join(logsDir, "ssim_train"))
+    logger_val = Logger(os.path.join(logsDir, "ssim_val"))
     
     # manually enumerate epochs
     for i in range(n_steps):
@@ -172,9 +165,9 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
         # update discriminator for generated samples
         d_loss2 = d_model.train_on_batch([X_realA, X_fakeB], y_fake)
         # update the generator
-        g_loss, _, _ = gan_model.train_on_batch(X_realA, [y_real, X_realB])
+        g_loss, _, _, ssim_loss = gan_model.train_on_batch(X_realA, [y_real, X_realB, X_realB])
         # summarize performance
-        print('>%d, d1[%.3f] d2[%.3f] g[%.3f]' % (i+1, d_loss1, d_loss2, g_loss))
+        print('>%d, d1[%.3f] d2[%.3f] g[%.3f] ssim[%.3f]' % (i+1, d_loss1, d_loss2, g_loss, ssim_loss))
 
         # summarize model performance and store models
         if (i+1) % (bat_per_epo) == 0:
@@ -183,18 +176,19 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
         # Store losses (tensorboard) 
         if (i+1) % (bat_per_epo // 50) == 0:
             logger_g.log_scalar('run_{}'.format(current_time), g_loss, i)
+            logger_ssim.log_scalar('run_{}'.format(current_time), ssim_loss, i)
             logger_d1.log_scalar('run_{}'.format(current_time), d_loss1, i)
             logger_d2.log_scalar('run_{}'.format(current_time), d_loss2, i)  
 
         # Store similarities (tensorboard)
         if (i+1) % (bat_per_epo // 20) == 0:
-            neg_similarity_train = check_mae(g_model, dataset_train, 5)
-            neg_similarity_val = check_mae(g_model, dataset_test, 5)
-
-            logger_train.log_scalar('run_{}'.format(current_time), neg_similarity_train, i)
+            neg_similarity_train = check_ssim(g_model, dataset_train, 1)
+            neg_similarity_val = check_ssim(g_model, dataset_test, 1) # should probably select one validation slice instead
+            
+            logger_train.log_scalar('run_{}'.format(current_time), neg_similarity_train, i) # higher is better (more similar)
             logger_val.log_scalar('run_{}'.format(current_time), neg_similarity_val, i)
 
             
         # type the following into your prompt: 
-        # tensorboard --logdir "logs"
+        # tensorboard --logdir "../logs"
         # and go to http://localhost:6006/

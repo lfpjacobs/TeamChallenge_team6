@@ -1,3 +1,4 @@
+import tensorflow as tf
 from keras.optimizers import Adam
 from keras.initializers import RandomNormal
 from keras.models import Model
@@ -115,6 +116,16 @@ def define_generator(image_shape=(256,256,3)):
     model = Model(in_image, out_image)
     return model
 
+# Loss function
+def ssim_loss(y_true, y_pred):
+    '''
+    This function is based on the standard SSIM implementation from: 
+    Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004). 
+    Image quality assessment: from error visibility to structural similarity. 
+    IEEE transactions on image processing.
+    '''
+    return 1 - tf.image.ssim(y_true, y_pred, max_val=1.0)[0] #first (and only) one in the batch
+
 # define the combined generator and discriminator model, for updating the generator
 def define_gan(g_model, d_model, image_shape):
 	# make weights in the discriminator not trainable
@@ -128,10 +139,10 @@ def define_gan(g_model, d_model, image_shape):
 	# connect the source input and generator output to the discriminator input
     dis_out = d_model([in_src, gen_out])
 	# src image as input, generated image and classification output
-    model = Model(in_src, [dis_out, gen_out])
+        
+    model = Model(in_src, [dis_out, gen_out, gen_out])
 
-    # TODO: @Luuk, implement structural similarity metric and check the loss weights.
 	# compile model
     opt = Adam(lr=0.0002, beta_1=0.5)
-    model.compile(loss=['binary_crossentropy', 'mae'], optimizer=opt, loss_weights=[1,100])
+    model.compile(loss=['binary_crossentropy', 'mae', ssim_loss], optimizer=opt, loss_weights=[1, 100, 100])
     return model
