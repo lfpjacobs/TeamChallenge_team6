@@ -126,7 +126,6 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
 	  
     # Define loggers for losses, images and similarity metrics
     logger_g = Logger(os.path.join(logsDir, "gen"))
-    logger_ssim = Logger(os.path.join(logsDir, "ssim_loss"))
     logger_d1 = Logger(os.path.join(logsDir, "dis1"))
     logger_d2 = Logger(os.path.join(logsDir, "dis2"))
     logger_im = Logger(os.path.join(logsDir, "im"))
@@ -165,9 +164,9 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
         # update discriminator for generated samples
         d_loss2 = d_model.train_on_batch([X_realA, X_fakeB], y_fake)
         # update the generator
-        g_loss, _, _, ssim_loss = gan_model.train_on_batch(X_realA, [y_real, X_realB, X_realB])
+        g_loss, _, _, _ = gan_model.train_on_batch(X_realA, [y_real, X_realB, X_realB])
         # summarize performance
-        print('>%d, d1[%.3f] d2[%.3f] g[%.3f] ssim[%.3f]' % (i+1, d_loss1, d_loss2, g_loss, ssim_loss))
+        print('>%d, d1[%.3f] d2[%.3f] g[%.3f]' % (i+1, d_loss1, d_loss2, g_loss))
 
         # summarize model performance and store models
         if (i+1) % (bat_per_epo) == 0:
@@ -176,7 +175,6 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
         # Store losses (tensorboard) 
         if (i+1) % (bat_per_epo // 50) == 0:
             logger_g.log_scalar('run_{}'.format(current_time), g_loss, i)
-            logger_ssim.log_scalar('run_{}'.format(current_time), ssim_loss, i)
             logger_d1.log_scalar('run_{}'.format(current_time), d_loss1, i)
             logger_d2.log_scalar('run_{}'.format(current_time), d_loss2, i)  
 
