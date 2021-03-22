@@ -1,63 +1,63 @@
 import numpy as np
 import scipy
+import scipy.stats
 import matplotlib.pyplot as plt
 import os
 import tensorflow as tf
 import nibabel as nib
+from glob import glob
 from keras.preprocessing.image import img_to_array
 from keras.models import load_model
 from skimage.metrics import structural_similarity
 
-# TODO: This code isn't functional yet. Need to take a look at this.
+def getDSC(testImage, resultImage):
+    """
+    Helper function:
+    Compute the Dice Similarity Coefficient for image pair.
+    Input needs to be 3D array. 
+    """
 
-#def getDSC(testImage, resultImage):
-#    """
-#    Helper function:
-#    Compute the Dice Similarity Coefficient for image pair.
-#    Input needs to be 3D array 
-#    """
-#
-#    testArray   = testImage.flatten()
-#    resultArray = resultImage.flatten()
-#    
-#    # similarity = 1.0 - dissimilarity
-#    return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
-#
-#
-#def get_maskDSC(subject_list, g_model, datadir):
-#    """
-#    Perform registration on mask day 4 --> day0. Then compute the DSC 
-#    for all test set pairs.
-#    input: list of rat subjects in test set, generator model, datadir
-#    output: array with pairwise DSC
-#    """
-#    DSC_scores=[] #store dice scores here
-#    
-#    #load the lesionmasks for day0 and day4
-#    dataDir = os.path.join("..", "..", "data")
-#
-#    # Define current data locations
-#    PreprocessedDir = os.path.join(dataDir, "preprocessed")
-#    
-#    #load masks
-#    day4_masks=[]    
-#    day0_masks_gt=[] #Ground truth day0 masks
-#    day0_mask_reg=[] #Registered day0 masks
-#    for subject in subject_list:
-#        img_src = nib.load(os.path.join(PreprocessedDir, subject, "day4_mask.nii.gz"))
-#        img_tar = nib.load(os.path.join(PreprocessedDir, subject, "day0_mask.nii.gz"))
-#
-#        img_src = img_to_array(img_src.dataobj)
-#        img_tar = img_to_array(img_tar.dataobj)
-#        day4_masks.append(img_src)
-#        day0_masks_gt.append(img_tar)
-#    
-#    #perform registration on mask day 4 --> day 0
-#    for i in range(len(day4_masks)): 
-#        day0_mask_reg = g_model.predict(day4_masks[i]) #I am not sure how to do this, this is probably wrong
-#        DSC_scores.append(getDSC(day0_masks_gt[i], day0_mask_reg))
-#    
-#    return DSC_scores
+    testArray   = testImage.flatten()
+    resultArray = resultImage.flatten()
+    
+    # similarity = 1.0 - dissimilarity
+    return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
+
+
+def get_fnirt_DSC(datadir):
+    """
+    Calculates dice similarity coefficients between FNIRT masks and
+    ground truth lesionmasks. 
+    Input: data directory
+    Output: list of DSCs for each subject
+    """  
+    DSC_list=[]
+    #Load data directories 
+    fsl_subjectDirs = glob(os.path.join(datadir, "FSL_results", "rat*"))
+    gt_subjectDirs = glob(os.path.join(datadir, "preprocessed", "rat*"))
+    if len(fsl_subjectDirs) != len(gt_subjectDirs):
+        raise ValueError("Mismatch in number of subjects")
+    
+    #Loop over subjects and calculate DSC for fnirt & ground truth pairs
+    for subject_n in range(len(fsl_subjectDirs)):
+        fsl_subjectDir = fsl_subjectDirs[subject_n]
+        gt_subjectDir = gt_subjectDirs[subject_n]
+        
+        fsl_mask = nib.load(os.path.join(fsl_subjectDir, "mask_fnirt.nii.gz"))
+        gt_mask  = nib.load(os.path.join(gt_subjectDir,  "day0_mask.nii.gz"))
+        fsl_mask_array = fsl_mask.get_fdata()
+        gt_mask_array = gt_mask.get_fdata()
+        
+        #Make FNIRT masks binary
+        threshold_indices = fsl_mask_array != 0
+        fsl_mask_array[threshold_indices] = 1
+        
+        #Calculate and DSC and append 
+        DSC = getDSC(fsl_mask_array, gt_mask_array)
+        #DSC = getDSC(fsl_mask_array[:,11:13,:], gt_mask_array[:,11:13,:]) #TODO: implement slices
+        DSC_list.append(DSC)
+    
+    return DSC_list
 
 def evaluate(d_model, g_model, gan_model, dataset, specific_model=False):
     """"
