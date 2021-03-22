@@ -4,7 +4,7 @@ from data_preperation import data_prep
 from preprocessing import preprocess_data
 from model_util import define_discriminator, define_generator, define_gan
 from train_util import train
-from eval_util import eval, get_fnirt_DSC
+from eval_util import evaluate, get_fnirt_DSC
 
 
 def setup_tf_session():
@@ -68,7 +68,7 @@ def main():
 
     # Evaluate model
     print("Step 4: Evaluation")
-    eval(d_model, g_model, gan_model, dataset_test)
+    evaluate(d_model, g_model, gan_model, dataset_test)
     eval_DSCs = get_fnirt_DSC(dataDir)
     print("Evaluation completed!\n")
 
