@@ -2,7 +2,7 @@ import numpy as np
 import gryds # https://github.com/tueimage/gryds --> pip install git+https://github.com/tueimage/gryds
 import random
 
-# TODO: @Sjors, implement more augmentation, e.g. noise / L/R flip and more deformation/rotation.
+
 def augment(imA, imB):
     """
     Input day0 and day4 image of the same rat
@@ -25,7 +25,7 @@ def augment(imA, imB):
     # Define random rotation matrix
     a_rotation = gryds.AffineTransformation(
         ndim=2,
-        angles=[random.uniform(-np.pi/36, np.pi/36)],
+        angles=[random.uniform(-np.pi/24, np.pi/24)],
         center=[0.5, 0.5]
     )
 
@@ -38,4 +38,21 @@ def augment(imA, imB):
     transformed_imageA = an_image_interpolatorA.transform(composed)
     transformed_imageB = an_image_interpolatorB.transform(composed)
     
+    # Define noise augmentation
+    mu = 0.0
+    sigma = random.uniform(0., 0.05)
+    noise_mapA = np.random.normal(mu, sigma, size = np.size(imA)).reshape((256, 256))
+    noise_mapB = np.random.normal(mu, sigma, size = np.size(imB)).reshape((256, 256))
+    noise_mapA[transformed_imageA < 1e-2] = 0.
+    noise_mapB[transformed_imageB < 1e-2] = 0.
+
+    transformed_imageA = transformed_imageA + noise_mapA
+    transformed_imageB = transformed_imageB + noise_mapB
+
+    # Flip L/R (half of the time)
+    perform_flip = random.choice([False, True])
+    if perform_flip:
+        transformed_imageA = np.fliplr(transformed_imageA)
+        transformed_imageB = np.fliplr(transformed_imageB)
+
     return [transformed_imageA.reshape((256,256,1)), transformed_imageB.reshape((256,256,1))]

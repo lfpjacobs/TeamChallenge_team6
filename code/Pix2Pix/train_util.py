@@ -9,6 +9,7 @@ from numpy.random import randint
 from augmentation import augment
 from datetime import datetime
 from skimage.metrics import structural_similarity
+from PIL import Image
 
 # load and prepare training images
 def load_real_samples(filename):
@@ -151,6 +152,17 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
                     A[rand_i[k]] = trainA_aug
                     B[rand_i[k]] = trainB_aug
                     k += 1
+
+                    # Write images for debugging purposes
+                    # filename_realA = os.path.join("..", "..", "data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_realA.png")
+                    # filename_A = os.path.join("..", "..", "data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_A.png")
+                    # filename_B = os.path.join("..", "..", "data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_B.png")
+                    # debug_img_realA = Image.fromarray((255*trainA_ori[j].reshape((256, 256))).astype(np.uint8))
+                    # debug_imgA = Image.fromarray((255*trainA_aug.reshape((256, 256))).astype(np.uint8))
+                    # debug_imgB = Image.fromarray((255*trainB_aug.reshape((256, 256))).astype(np.uint8))
+                    # debug_img_realA.save(filename_realA)
+                    # debug_imgA.save(filename_A)
+                    # debug_imgB.save(filename_B)
                     
             dataset_aug = [A, B] # all trainingdata (day4 and day1)
             print("Completed")
