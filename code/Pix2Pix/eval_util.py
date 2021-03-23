@@ -3,10 +3,8 @@ import scipy
 import scipy.stats
 import matplotlib.pyplot as plt
 import os
-import tensorflow as tf
 import nibabel as nib
 from glob import glob
-from keras.preprocessing.image import img_to_array
 from keras.models import load_model
 from skimage.metrics import structural_similarity
 
@@ -59,16 +57,16 @@ def get_fnirt_DSC(datadir):
     
     return DSC_list
 
-def evaluate(d_model, g_model, gan_model, dataset, specific_model=False):
+def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last"):
     """"
     Evaluation function for trained GAN
     input: generator model & test set image pairs
     output: registered test images & DSC
     """
     # load model, gebeurt nu niks mee, maar dit zou in functie parameters kunnen om een specifiek model te evalueren
-    if specific_model == True:
-        os.path.join("..", "..", "models")
-        g_model = load_model('g_model_0029400.h5') #hier iets verzinnen om simpel een model te kiezen (of in main)    
+    if specific_model != "last":
+        model_dir = os.path.join("..", "..", "models", f"run_{time}")
+        g_model = load_model(os.path.join(model_dir, 'g_model_{}.h5'.format(specific_model))) # e.g. 0029400  
     
     #Preprocess test set
     true_day4, true_day0 = dataset 
@@ -76,29 +74,38 @@ def evaluate(d_model, g_model, gan_model, dataset, specific_model=False):
     #Generate registered (fake) day0 images
     predicted_day0 = g_model.predict(true_day4.reshape(len(true_day4), 256, 256, 1)) # needs to be 4D
     
-    #Plot predicted (registered) and true image side by side 
+    #Plot results
     SSIM_list = []
-    fig, ax = plt.subplots(3, len(true_day4), figsize=(25, 5))
+    fig, ax = plt.subplots(4, len(true_day4), figsize=(25, 10))
     for i in range(len(true_day4)):
-        pred = predicted_day0[i].reshape(256,256)
-        true = np.float32(true_day0[i].reshape(256,256))
+        pred_d0 = predicted_day0[i].reshape(256,256)
+        true_d0 = np.float32(true_day0[i].reshape(256,256))
+        true_d4 = np.float32(true_day4[i].reshape(256,256))
         
-        SSIM, ssim_map = structural_similarity(pred, true, full=True)
-        
-        SSIM_list.append(SSIM)
-        print("SSIM of subject {}: ".format(i), SSIM)
-        
-        ax[0,i].imshow(pred, cmap='gray')
+        SSIM, ssim_map = structural_similarity(pred_d0, true_d0, full=True)
+
+        ax[0,i].imshow(pred_d0, cmap='gray')
         ax[0,i].axis('off')
-        ax[0,i].set_title('Test subject {}'.format(i))
-        ax[1,i].imshow(true, cmap='gray')
+        ax[0,i].set_title('Pred d0 subject {}'.format(i))
+        
+        ax[1,i].imshow(true_d0, cmap='gray')
         ax[1,i].axis('off')
+        ax[1,i].set_title('True d0 subject {}'.format(i))
+        
         ax[2,i].imshow(ssim_map, cmap='gray')
         ax[2,i].axis('off')
+        ax[2,i].set_title('SSIM map subject {}'.format(i))
         
-    # first row shows predicted scans
-    # second row shows the corresponding ground truths
-    # third row shows full structural similarity image (for possible qualitative analysis)
-    
-    # quantify deformation:
-    # eventually compute SSIM between predicted day0 and given day4
+        ax[3,i].imshow(true_d4, cmap='gray')
+        ax[3,i].axis('off')
+        ax[3,i].set_title('True d4 subject {}'.format(i))
+
+        # quantified structural deformation
+        SSIM_def = structural_similarity(pred_d0, true_d4) 
+        SSIM_list.append(SSIM_def)
+        
+        print("SSIM (day0 v day0_pred) of subject {}: ".format(i), SSIM) # you want this to be 1
+        print("SSIM (day4 v day0_pred) of subject {}: ".format(i), SSIM_def) # deformation
+        
+    return SSIM_list
+        

@@ -144,5 +144,5 @@ def define_gan(g_model, d_model, image_shape):
 
 	# compile model
     opt = Adam(lr=0.0002, beta_1=0.5)
-    model.compile(loss=['binary_crossentropy', 'mae', ssim_loss], optimizer=opt, loss_weights=[1, 100, 100])
+    model.compile(loss=['binary_crossentropy', 'mae', ssim_loss], optimizer=opt, loss_weights=[1, 10, 10])
     return model

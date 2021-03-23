@@ -9,7 +9,6 @@ from numpy.random import randint
 from augmentation import augment
 from datetime import datetime
 from skimage.metrics import structural_similarity
-from PIL import Image
 
 # load and prepare training images
 def load_real_samples(filename):
@@ -197,8 +196,5 @@ def train(d_model, g_model, gan_model, dataset_train, dataset_test, n_epochs=100
             
             logger_train.log_scalar('run_{}'.format(current_time), neg_similarity_train, i) # higher is better (more similar)
             logger_val.log_scalar('run_{}'.format(current_time), neg_similarity_val, i)
-
-            
-        # type the following into your prompt: 
-        # tensorboard --logdir "../logs"
-        # and go to http://localhost:6006/
+    
+    return current_time

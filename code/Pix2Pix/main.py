@@ -6,7 +6,7 @@ from model_util import define_discriminator, define_generator, define_gan
 from train_util import train
 from eval_util import evaluate, get_fnirt_DSC
 
-
+#%%
 def setup_tf_session():
   """
   Function that fixes memory problems for gpu runs
@@ -23,57 +23,53 @@ def setup_tf_session():
   return len(gpus)
 
 # TODO: @Sjors, run through and bugfix the entire pipeline after changes.
-def main():
-    """
-    Main function for the pipeline used for model training and result prediction
-    """
 
-    # Setup the tf session for possible gpu usage
-    setup_tf_session()
+# Setup the tf session for possible gpu usage
+setup_tf_session()
 
-    # Define data directory
-    dataDir = os.path.join("..", "..", "data")
+# Define data directory
+dataDir = os.path.join("..", "..", "data")
 
-    # Preprocess data
-    print("Step 0: Preprocessing data...\t", end="", flush=True)
-    preprocess_data(dataDir)
-    print("Completed!\n")
+# Preprocess data
+print("Step 0: Preprocessing data...\t", end="", flush=True)
+preprocess_data(dataDir)
+print("Completed!\n")
 
-    # Load data
-    print("Step 1: Loading and extracting data...\n")
+# Load data
+print("Step 1: Loading and extracting data...\n")
 
-    print("Dataset - TRAIN")
-    dataset_train = data_prep(os.path.join(dataDir, "preprocessed"), True, "train")
-    print("Dataset - TEST")
-    dataset_test = data_prep(os.path.join(dataDir, "preprocessed"), True, "test")
+print("Dataset - TRAIN")
+dataset_train = data_prep(os.path.join(dataDir, "preprocessed"), True, "train")
+print("Dataset - TEST")
+dataset_test = data_prep(os.path.join(dataDir, "preprocessed"), True, "test")
 
-    image_shape = dataset_train[0].shape[1:]
-    image_shape = (image_shape[0], image_shape[1], 1)
+image_shape = dataset_train[0].shape[1:]
+image_shape = (image_shape[0], image_shape[1], 1)
 
-    print("Completed data loading!\n")
+print("Completed data loading!\n")
 
-    # Define the models
-    print("Step 2: Defining models")
-    d_model = define_discriminator(image_shape)
-    g_model = define_generator(image_shape)
+# Define the models
+print("Step 2: Defining models")
+d_model = define_discriminator(image_shape)
+g_model = define_generator(image_shape)
 
-    gan_model = define_gan(g_model, d_model, image_shape)
+gan_model = define_gan(g_model, d_model, image_shape)
 
-    print("Defining models completed!\n")
+print("Defining models completed!\n")
 
-    # Train model
-    print("Step 3: Training")
-    train(d_model, g_model, gan_model, dataset_train, dataset_test)
-    print("Training completed!\n")
+# Train model
+print("Step 3: Training")
+time = train(d_model, g_model, gan_model, dataset_train, dataset_test)
+print("Training completed!\n")
 
-    # Evaluate model
-    print("Step 4: Evaluation")
-    evaluate(d_model, g_model, gan_model, dataset_test)
-    eval_DSCs = get_fnirt_DSC(dataDir)
-    print("Evaluation completed!\n")
+#%% 
+# Choose which model (based on step) you want to evaluate (e.g. "0029400")
 
-    return
+# type the following into your prompt (with specified path to logs): 
+# tensorboard --logdir "../logs" 
+# and go to http://localhost:6006/
 
-
-if __name__ == "__main__":
-    main()
+print("Step 4: Evaluation")
+eval_SSIMs = evaluate(d_model, g_model, gan_model, dataset_test, time, "0000012")
+eval_DSCs = get_fnirt_DSC(dataDir)
+print("Evaluation completed!\n")
