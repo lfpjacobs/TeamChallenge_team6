@@ -39,9 +39,9 @@ print("Completed!\n")
 print("Step 1: Loading and extracting data...\n")
 
 print("Dataset - TRAIN")
-dataset_train = data_prep(os.path.join(dataDir, "preprocessed"), True, "train")
+dataset_train, train_subjects = data_prep(os.path.join(dataDir, "preprocessed"), True, "train")
 print("Dataset - TEST")
-dataset_test = data_prep(os.path.join(dataDir, "preprocessed"), True, "test")
+dataset_test, test_subjects = data_prep(os.path.join(dataDir, "preprocessed"), True, "test")
 
 image_shape = dataset_train[0].shape[1:]
 image_shape = (image_shape[0], image_shape[1], 1)
@@ -71,5 +71,5 @@ print("Training completed!\n")
 
 print("Step 4: Evaluation")
 eval_SSIMs = evaluate(d_model, g_model, gan_model, dataset_test, time, "0000012")
-eval_DSCs = get_fnirt_DSC(dataDir)
+eval_DSCs = get_fnirt_DSC(dataDir, test_subjects)
 print("Evaluation completed!\n")

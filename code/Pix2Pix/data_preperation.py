@@ -243,7 +243,7 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, 
     else:
         raise ValueError("The selected data directory doesn't contain any properly formatted data")
     
-    return [src_array, tar_array]
+    return [src_array, tar_array], subjectDirs
 
 
 if __name__ == "__main__":

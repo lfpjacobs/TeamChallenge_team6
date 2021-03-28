@@ -22,7 +22,7 @@ def getDSC(testImage, resultImage):
     return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
 
 
-def get_fnirt_DSC(datadir):
+def get_fnirt_DSC(datadir, subject_list):
     """
     Calculates dice similarity coefficients between FNIRT masks and
     ground truth lesionmasks. 
@@ -30,9 +30,13 @@ def get_fnirt_DSC(datadir):
     Output: list of DSCs for each subject
     """  
     DSC_list=[]
-    #Load data directories 
-    fsl_subjectDirs = glob(os.path.join(datadir, "FSL_results", "rat*"))
-    gt_subjectDirs = glob(os.path.join(datadir, "preprocessed", "rat*"))
+    #Load data directories
+    fsl_subjectDirs=[]
+    gt_subjectDirs=[]
+    for subject in range(len(subject_list)):
+        subject_id = subject_list[subject][-5:]
+        fsl_subjectDirs.append(os.path.join(datadir, "FSL_results", subject_id))
+        gt_subjectDirs.append(os.path.join(datadir, "preprocessed", subject_id))
     if len(fsl_subjectDirs) != len(gt_subjectDirs):
         raise ValueError("Mismatch in number of subjects")
     
@@ -51,8 +55,8 @@ def get_fnirt_DSC(datadir):
         fsl_mask_array[threshold_indices] = 1
         
         #Calculate and DSC and append 
-        DSC = getDSC(fsl_mask_array, gt_mask_array)
-        #DSC = getDSC(fsl_mask_array[:,11:13,:], gt_mask_array[:,11:13,:]) #TODO: implement slices
+        #DSC = getDSC(fsl_mask_array, gt_mask_array)
+        DSC = getDSC(fsl_mask_array[:,11:14,:], gt_mask_array[:,11:14,:]) #TODO: implement slices
         DSC_list.append(DSC)
     
     return DSC_list
