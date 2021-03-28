@@ -161,7 +161,7 @@ def histogram_equalization(img, number_bins=256):
     return img_equalized.reshape(img.shape), cdf
 
 
-def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.8, random_seed=1234):
+def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, random_seed=1234):
     """
     Main data preperation function.
     Note that currently, all training data is stored in memory.
