@@ -22,8 +22,6 @@ def setup_tf_session():
   
   return len(gpus)
 
-# TODO: @Sjors, run through and bugfix the entire pipeline after changes.
-
 # Setup the tf session for possible gpu usage
 setup_tf_session()
 
