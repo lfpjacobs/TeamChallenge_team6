@@ -4,6 +4,7 @@ import scipy.stats
 import matplotlib.pyplot as plt
 import os
 import nibabel as nib
+import pandas as pd
 from glob import glob
 from keras.models import load_model
 from skimage.metrics import structural_similarity
@@ -21,6 +22,24 @@ def getDSC(testImage, resultImage):
     # similarity = 1.0 - dissimilarity
     return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
 
+def resp_vec_correlation(datadir, subject_list):
+    """
+    Calculates correlation metrics for response vectors, DSC and SSIM
+    for given subjects. 
+    """
+    subjects=[]
+    for subject in range(len(subject_list)):
+        subjects.append(subject_list[subject][-2:])
+
+    DSCs = get_fnirt_DSC(datadir, sorted(subject_list)) #TODO Bas: check if correctly implemented
+    print(DSCs)
+    filename = os.path.join(datadir, "responsevecs_TC20analysis210113.csv")
+    resp_vec = pd.read_csv(filename, sep=',', header=0, index_col=0)
+    resp_vec = resp_vec.loc[resp_vec['ID'].isin(subjects)]
+    resp_vec['DSC'] = DSCs
+    
+    #TODO Bas: correlation and SSIM
+    return resp_vec
 
 def get_fnirt_DSC(datadir, subject_list):
     """
