@@ -57,7 +57,7 @@ print("Defining models completed!\n")
 
 # Train model
 print("Step 3: Training")
-time = train(d_model, g_model, gan_model, dataset_train, dataset_test)
+time = train(d_model, g_model, gan_model, dataset_train)
 print("Training completed!\n")
 
 #%% 
