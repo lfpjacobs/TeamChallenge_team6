@@ -22,24 +22,31 @@ def getDSC(testImage, resultImage):
     # similarity = 1.0 - dissimilarity
     return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
 
-def resp_vec_correlation(datadir, subject_list):
+def resp_vec_correlation(datadir, subject_list, method = 'pearson'):
     """
     Calculates correlation metrics for response vectors, DSC and SSIM
-    for given subjects. 
+    for given subjects. Method is either 'pearson', 'kendall', 'spearman' 
+    or callable. 
     """
+    #Store subjects for correctly parsing dataframe
     subjects=[]
     for subject in range(len(subject_list)):
         subjects.append(subject_list[subject][-2:])
 
-    DSCs = get_fnirt_DSC(datadir, sorted(subject_list)) #TODO Bas: check if correctly implemented
-    print(DSCs)
+    #Read response vectors from csv file into dataframe and parse
     filename = os.path.join(datadir, "responsevecs_TC20analysis210113.csv")
     resp_vec = pd.read_csv(filename, sep=',', header=0, index_col=0)
     resp_vec = resp_vec.loc[resp_vec['ID'].isin(subjects)]
+    
+    #Calculate FNIRT dice scores and add as column to dataframe
+    DSCs = get_fnirt_DSC(datadir, sorted(subject_list)) 
     resp_vec['DSC'] = DSCs
     
-    #TODO Bas: correlation and SSIM
-    return resp_vec
+    #TODO Bas: implement SSIM
+    
+    #Calculate the correlation
+    correlations = resp_vec.corr(method)
+    return correlations
 
 def get_fnirt_DSC(datadir, subject_list):
     """
