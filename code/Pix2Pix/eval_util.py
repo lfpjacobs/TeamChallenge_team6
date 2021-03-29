@@ -22,9 +22,9 @@ def getDSC(testImage, resultImage):
     # similarity = 1.0 - dissimilarity
     return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
 
-def resp_vec_correlation(datadir, subject_list, method = 'pearson'):
+def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson'):
     """
-    Calculates correlation metrics for response vectors, DSC and SSIM
+    Calculates correlation matrix for response vectors, DSC and SSIM
     for given subjects. Method is either 'pearson', 'kendall', 'spearman' 
     or callable. 
     """
@@ -42,17 +42,24 @@ def resp_vec_correlation(datadir, subject_list, method = 'pearson'):
     DSCs = get_fnirt_DSC(datadir, sorted(subject_list)) 
     resp_vec['DSC'] = DSCs
     
-    #TODO Bas: implement SSIM
+    #Add individual slice SSIMs
+    resp_vec_copy = resp_vec[:0]
+    for row in range(len(resp_vec)):
+        for i in range(3):
+            resp_vec_copy = resp_vec_copy.append(resp_vec[row:row+1])
+    resp_vec_copy['SSIM'] = SSIM_list
     
-    #Calculate the correlation
-    correlations = resp_vec.corr(method)
+    #Calculate  and return the correlation matrix
+    resp_vec_def = resp_vec_copy.drop('ID', axis=1)
+    correlations = resp_vec_def.corr(method)
     return correlations
+
 
 def get_fnirt_DSC(datadir, subject_list):
     """
     Calculates dice similarity coefficients between FNIRT masks and
     ground truth lesionmasks. 
-    Input: data directory
+    Input: data directory, subject to calculate DSC
     Output: list of DSCs for each subject
     """  
     DSC_list=[]
@@ -82,7 +89,7 @@ def get_fnirt_DSC(datadir, subject_list):
         
         #Calculate and DSC and append 
         #DSC = getDSC(fsl_mask_array, gt_mask_array)
-        DSC = getDSC(fsl_mask_array[:,11:14,:], gt_mask_array[:,11:14,:]) #TODO: implement slices
+        DSC = getDSC(fsl_mask_array[:,11:14,:], gt_mask_array[:,11:14,:]) 
         DSC_list.append(DSC)
     
     return DSC_list
