@@ -250,16 +250,17 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, 
         img_src_pad[(new_x-ori_x)//2:ori_x+(new_x-ori_x)//2, (new_y-ori_y)//2:ori_y+(new_y-ori_y)//2, :] = img_src[:]
         img_tar_pad[(new_x-ori_x)//2:ori_x+(new_x-ori_x)//2, (new_y-ori_y)//2:ori_y+(new_y-ori_y)//2, :] = img_tar[:]
 
-        # Now, crop the images to remove unnecessary empty space
-        [img_src_crop, img_tar_crop] = crop_brain(img_src_pad, img_tar_pad, os.path.split(subjectDir)[-1], importance_map, crop_size)
+        # Histogram equalization
+        img_src_eq, _ = histogram_equalization(img_src_pad)
+        img_tar_eq, _ = histogram_equalization(img_tar_pad)
 
-        img_src_std = normalize_img(img_src_crop)
-        img_tar_std = normalize_img(img_tar_crop)
+        # Now, crop the images to remove unnecessary empty space
+        [img_src_crop, img_tar_crop] = crop_brain(img_src_eq, img_tar_eq, os.path.split(subjectDir)[-1], importance_map, crop_size)
 
         # Add individual slices to image lists 
         for slice_i in range(crop_size[2]):
-            src_array[j] = img_src_std[:,:,slice_i]
-            tar_array[j] = img_tar_std[:,:,slice_i]
+            src_array[j] = img_src_crop[:,:,slice_i]
+            tar_array[j] = img_tar_crop[:,:,slice_i]
             j += 1
             
         print("Completed")
