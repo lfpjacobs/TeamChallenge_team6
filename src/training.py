@@ -92,13 +92,15 @@ def summarize_performance(step, g_model, dataset_train, dataset_val, modelsDir, 
     print('>Saved model: {}s'.format(filename))
     
     # Generate images to be displayed
-    realA_train = (X_realA_train[0] - np.min(X_realA_train[0])) / (np.max(X_realA_train[0]) - np.min(X_realA_train[0]))
-    fakeB_train = (X_fakeB_train[0] - np.min(X_fakeB_train[0])) / (np.max(X_fakeB_train[0]) - np.min(X_fakeB_train[0]))
-    realB_train = (X_realB_train[0] - np.min(X_realB_train[0])) / (np.max(X_realB_train[0]) - np.min(X_realB_train[0]))
+    scale_train = (np.max(X_realA_train[0]) - np.min(X_realA_train[0]) + np.max(X_realB_train[0]) - np.min(X_realB_train[0])) / 2
+    realA_train = (X_realA_train[0] - np.min(X_realA_train[0])) / scale_train
+    fakeB_train = (X_fakeB_train[0] - np.min(X_fakeB_train[0])) / scale_train
+    realB_train = (X_realB_train[0] - np.min(X_realB_train[0])) / scale_train
 
-    realA_val = (X_realA_val[0] - np.min(X_realA_val[0])) / (np.max(X_realA_val[0]) - np.min(X_realA_val[0]))
-    fakeB_val = (X_fakeB_val[0] - np.min(X_fakeB_val[0])) / (np.max(X_fakeB_val[0]) - np.min(X_fakeB_val[0]))
-    realB_val = (X_realB_val[0] - np.min(X_realB_val[0])) / (np.max(X_realB_val[0]) - np.min(X_realB_val[0]))
+    scale_val = (np.max(X_realA_val[0]) - np.min(X_realA_val[0]) + np.max(X_realB_val[0]) - np.min(X_realB_val[0])) / 2
+    realA_val = (X_realA_val[0] - np.min(X_realA_val[0])) / scale_val
+    fakeB_val = (X_fakeB_val[0] - np.min(X_fakeB_val[0])) / scale_val
+    realB_val = (X_realB_val[0] - np.min(X_realB_val[0])) / scale_val
 
     # log images
     logger.log_images('run_{}_step{}_train'.format(run, step), [realA_train, fakeB_train, realB_train], step)
