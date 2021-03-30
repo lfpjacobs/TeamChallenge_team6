@@ -1,3 +1,6 @@
+import sys
+if "" not in sys.path : sys.path.append("")
+
 import tensorflow as tf
 from keras.optimizers import Adam
 from keras.initializers import RandomNormal
@@ -11,7 +14,6 @@ from keras.layers import Concatenate
 from keras.layers import Dropout
 from keras.layers import BatchNormalization
 
-# TODO: @Roos, make a flow diagram of the model and check dropout settings.
 
 def define_discriminator(image_shape):
 

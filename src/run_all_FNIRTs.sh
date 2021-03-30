@@ -16,8 +16,8 @@
 
 ## Define variables and files
 subjects=( 19 20 23 24 25 26 29 31 32 34 35 61 62 63 69 70 71 72 83 84 89 96 )
-dataDir="../data"
-resultDir="../FSL_results"
+dataDir="data/raw"
+resultDir="data/FSL_results"
 
 ## Make a directory for the results
 [ ! -d "$resultDir" ] && mkdir "$resultDir"

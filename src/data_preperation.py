@@ -1,3 +1,6 @@
+import sys
+if "" not in sys.path : sys.path.append("")
+
 import os
 import numpy as np
 import nibabel as nib
@@ -94,7 +97,7 @@ def optimalize_offsets(img, old_size, crop_size, importance_map):
     return best_offsets, z_offset
 
 
-def crop_brain(src_img, tar_img, subject_name, importance_map, crop_size=(128, 128, 25)):
+def crop_brain(src_img, tar_img, subject_name, importance_map, crop_size=(128, 128, 25), debug=False):
     """
     This function crops the input images to a specified size and maximizes
     the presence of brain tissue in the bounding box.
@@ -122,23 +125,24 @@ def crop_brain(src_img, tar_img, subject_name, importance_map, crop_size=(128, 1
     tar_img_res = np.flip(tar_img_res.swapaxes(0, 1), axis=0)
 
     # Make and save figures for debugging purposes
-    # Source image
-    for i in range(crop_size[2]):
-        plt.subplot(int(np.sqrt(crop_size[2]))+1, int(np.sqrt(crop_size[2]))+1 , 1+i)
-        plt.axis('off')
-        plt.imshow(src_img_res[:,:,i], cmap='gray')
-    
-    plt.savefig(os.path.join("..", "..", "data", "preprocessed", "brain_extraction",  f"cropped_src_{subject_name}.png"))
-    plt.close()
+    if debug:
+        # Source image
+        for i in range(crop_size[2]):
+            plt.subplot(int(np.sqrt(crop_size[2]))+1, int(np.sqrt(crop_size[2]))+1 , 1+i)
+            plt.axis('off')
+            plt.imshow(src_img_res[:,:,i], cmap='gray')
+        
+        plt.savefig(os.path.join("data", "preprocessed", "brain_extraction",  f"cropped_src_{subject_name}.png"))
+        plt.close()
 
-    # Target image
-    for i in range(crop_size[2]):
-        plt.subplot(int(np.sqrt(crop_size[2]))+1, int(np.sqrt(crop_size[2]))+1 , 1+i)
-        plt.axis('off')
-        plt.imshow(tar_img_res[:,:,i], cmap='gray')
-    
-    plt.savefig(os.path.join("..", "..", "data", "preprocessed", "brain_extraction",  f"cropped_tar_{subject_name}.png"))
-    plt.close()
+        # Target image
+        for i in range(crop_size[2]):
+            plt.subplot(int(np.sqrt(crop_size[2]))+1, int(np.sqrt(crop_size[2]))+1 , 1+i)
+            plt.axis('off')
+            plt.imshow(tar_img_res[:,:,i], cmap='gray')
+        
+        plt.savefig(os.path.join("data", "preprocessed", "brain_extraction",  f"cropped_tar_{subject_name}.png"))
+        plt.close()
 
     return [src_img_res, tar_img_res]
 
@@ -189,8 +193,8 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, 
     crop_size = (128, 128, 3)
     importance_map = generate_importance_map(crop_size)
     # Make brain extraction visualisation directory
-    if not os.path.isdir((os.path.join("..", "..", "data", "preprocessed", "brain_extraction"))):
-        os.mkdir((os.path.join("..", "..", "data", "preprocessed", "brain_extraction")))
+    if not os.path.isdir((os.path.join("data", "preprocessed", "brain_extraction"))):
+        os.mkdir((os.path.join("data", "preprocessed", "brain_extraction")))
 
     # initialize data
     src_array = np.zeros((len(subjectDirs)*crop_size[2], 256, 256))
@@ -247,4 +251,4 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, 
 
 
 if __name__ == "__main__":
-    [src_array, tar_array] = data_prep(os.path.join("..", "..", "data","preprocessed"), False)
+    [src_array, tar_array] = data_prep(os.path.join("data","preprocessed"), False)

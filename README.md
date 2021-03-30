@@ -3,23 +3,25 @@ Github repository for TUe/UU MIx Team Challenge - team 6
 
 **Proper file structure:**
 ```
-|--- Code --- Pix2Pix / * 
+|--- data --- FSL_results / *       % Directory used to store results from run_all_FNIRTs.sh 
 |          | 
-|          -- run_all_FNIRTs.sh 
+|          -- preprocessed / *      % Directory used to store preprocessed data
+|          | 
+|          -- raw / *               % Directory used to store raw (immutable) data
+|          | 
+|          -- referencerat / *      % Directory used to store atlases
 | 
-|--- data --- FSL_results / * 
-|          | 
-|          -- preprocessed / * 
-|          | 
-|          -- raw / * 
-|          | 
-|          -- referencecat / * 
-| 
-|--- models / * 
+|--- models / *                     % Directory used to store model weights
 |
-|--- logs / *
-| 
-|--- .gitignore 
-|--- LICENCE 
-|--- README.md 
+|--- logs / *                       % Directory used to store training logs (tensorboard)
+|
+|--- notebook / *                   % Directory used to store notebooks
+|
+|--- src / *                        % Directory used to store source code
+|
+|--- util / *                       % Directory used to store basic utility files
+|
+|--- .gitignore                     % gitignore
+|--- LICENCE                        % The MIT licence file
+|--- README.md                      % This README
 ```

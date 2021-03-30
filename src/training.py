@@ -1,3 +1,6 @@
+import sys
+if "" not in sys.path : sys.path.append("")
+
 import os
 import numpy as np
 import tensorflow as tf
@@ -33,7 +36,6 @@ def generate_real_samples(dataset, n_samples, patch_shape):
 	# generate 'real' class labels (1)
     y = ones((n_samples, patch_shape, patch_shape, 1))
     return [X1, X2], y
-
 
 # generate a batch of images, returns images and targets
 def generate_fake_samples(g_model, samples, patch_shape):
@@ -126,10 +128,10 @@ def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=1):
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-    modelsDir = os.path.join("..", "..", "models", f"run_{current_time}")
+    modelsDir = os.path.join("models", f"run_{current_time}")
     os.mkdir(modelsDir)
 
-    logsDir = os.path.join("..", "..", "logs", f"run_{current_time}")
+    logsDir = os.path.join("logs", f"run_{current_time}")
     os.mkdir(logsDir)
 
 	# determine the output square shape of the discriminator
@@ -188,9 +190,9 @@ def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=1):
                     k += 1
 
                     # Write images for debugging purposes
-                    # filename_realA = os.path.join("..", "..", "data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_realA.png")
-                    # filename_A = os.path.join("..", "..", "data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_A.png")
-                    # filename_B = os.path.join("..", "..", "data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_B.png")
+                    # filename_realA = os.path.join("data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_realA.png")
+                    # filename_A = os.path.join("data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_A.png")
+                    # filename_B = os.path.join("data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_B.png")
                     # debug_img_realA = Image.fromarray((255*trainA_ori[j].reshape((256, 256))).astype(np.uint8))
                     # debug_imgA = Image.fromarray((255*trainA_aug.reshape((256, 256))).astype(np.uint8))
                     # debug_imgB = Image.fromarray((255*trainB_aug.reshape((256, 256))).astype(np.uint8))

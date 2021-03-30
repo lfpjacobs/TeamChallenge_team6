@@ -1,3 +1,6 @@
+import sys
+if "" not in sys.path : sys.path.append("")
+
 import numpy as np
 import gryds # https://github.com/tueimage/gryds --> pip install git+https://github.com/tueimage/gryds
 import random

@@ -1,3 +1,6 @@
+import sys
+if "" not in sys.path : sys.path.append("")
+
 import os
 from glob import glob
 from shutil import copyfile
@@ -48,4 +51,4 @@ def preprocess_data(datadir):
 
 
 if __name__ == '__main__':
-    preprocess_data(os.path.join("..", "..", "data"))
+    preprocess_data("data")

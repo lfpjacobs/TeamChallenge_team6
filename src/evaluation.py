@@ -1,3 +1,6 @@
+import sys
+if "" not in sys.path : sys.path.append("")
+
 import numpy as np
 import scipy
 import scipy.stats
@@ -5,9 +8,9 @@ import matplotlib.pyplot as plt
 import os
 import nibabel as nib
 import pandas as pd
-from glob import glob
 from keras.models import load_model
 from skimage.metrics import structural_similarity
+
 
 def getDSC(testImage, resultImage):
     """
@@ -21,6 +24,7 @@ def getDSC(testImage, resultImage):
     
     # similarity = 1.0 - dissimilarity
     return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
+
 
 def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson'):
     """
@@ -94,6 +98,7 @@ def get_fnirt_DSC(datadir, subject_list):
     
     return DSC_list
 
+
 def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last"):
     """"
     Evaluation function for trained GAN
@@ -102,7 +107,7 @@ def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last"):
     """
     # load model, gebeurt nu niks mee, maar dit zou in functie parameters kunnen om een specifiek model te evalueren
     if specific_model != "last":
-        model_dir = os.path.join("..", "..", "models", f"run_{time}")
+        model_dir = os.path.join("models", f"run_{time}")
         g_model = load_model(os.path.join(model_dir, 'g_model_{}.h5'.format(specific_model))) # e.g. 0029400  
     
     #Preprocess test set
@@ -145,4 +150,4 @@ def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last"):
         print("SSIM (day4 v day0_pred) of subject {}: ".format(i), SSIM_def) # deformation
         
     return SSIM_list
-        
+      
