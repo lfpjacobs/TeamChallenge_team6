@@ -68,7 +68,7 @@ print("Training completed!\n")
 # and go to http://localhost:6006/
 
 print("Step 4: Evaluation")
-eval_SSIMs = evaluate(d_model, g_model, gan_model, dataset_test, time, "0000012")
+eval_SSIMs = evaluate(d_model, g_model, gan_model, dataset_test, time)
 eval_DSCs = get_fnirt_DSC(dataDir, test_subjects)
 resp_vec_cor = resp_vec_correlation(dataDir, test_subjects, eval_SSIMs)
 print("Evaluation completed!\n")
