@@ -7,8 +7,34 @@ import nibabel as nib
 from keras.preprocessing.image import img_to_array
 from glob import glob
 import random
+import math
 import scipy
 import matplotlib.pyplot as plt
+
+
+def inspect_data(dataset, n_samples=20, show_fig=True):
+    """
+    This function is used to generate a quality assessment figure.
+    It simply generates a couple of subplots, randomly chosen from the passed dataset.
+    """
+    idx = random.sample(range(np.shape(dataset)[1]), n_samples)
+
+    dim = math.ceil(n_samples**0.5)
+
+    fig = plt.figure(figsize=(20, int(n_samples/(2*dim) + 1) * 5))
+
+    for i in range(n_samples):
+        id = idx[i]
+        array_fig = np.concatenate((dataset[0][id], dataset[1][id]), axis=1)
+
+        plt.subplot(dim, dim, i+1)
+        plt.imshow(array_fig, cmap='gray')
+        plt.axis('off')
+
+    if show_fig:
+        plt.show()
+    else:
+        return fig
 
 
 def generate_importance_map(map_size):
