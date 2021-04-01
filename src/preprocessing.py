@@ -4,14 +4,17 @@ if "" not in sys.path : sys.path.append("")
 import os
 from glob import glob
 from shutil import copyfile
+from tqdm import tqdm
 
 
-def preprocess_data(datadir):
+def preprocess_data(datadir, verbose=False):
     """
     This function takes in the raw data and FSL results and restructures them in a convenient data format.
     """
 
     dataDir = os.path.abspath(datadir)
+
+    if verbose : print(f"Performing data preprocessing in directory:\n{dataDir:s}")
 
     # Define current data locations
     rawDir = os.path.join(dataDir, "raw")
@@ -41,13 +44,14 @@ def preprocess_data(datadir):
             os.mkdir(subjectDir)
 
     # Iteratively copy all files into the new subject directory
-    for i in range(len(day0_images_new)):
+    img_paths = range(len(day0_images_new))
+    for i in (tqdm(img_paths, ascii=True) if verbose else img_paths):
         copyfile(day0_images[i], day0_images_new[i])
         copyfile(day4_images[i], day4_images_new[i])
         copyfile(day0_masks[i], day0_masks_new[i])
         copyfile(day4_masks[i], day4_masks_new[i])
 
-    return True
+    return
 
 
 if __name__ == '__main__':
