@@ -28,6 +28,8 @@ The necessary file structure to run the example notebook with using the correspo
 |
 |--- util / *                       % Directory used to store basic utility files
 |
+|--- docs / *                       % Directory used to store some files used for documentation
+|
 |--- .gitignore                     % gitignore
 |--- LICENCE                        % The MIT licence file
 |--- README.md                      % This README
@@ -38,7 +40,7 @@ For training of the cGAN, the DWI_b0 images of day3 and day0 are necessary, thes
 ## Training
 Since training, as well as evaluation, of GANs are notoriously difficult and time consuming, the architecture (adapted from [[6]](#6)) and hyperparameters are based on the widely used Pix2Pix model. However, as will be discussed later, since the structural dissimilarity metric (DSSIM) is used as a quantification of the deformation (so between day3 and predicted day0), the DSSIM between the predicted day0 and the true day0 should be minimized during training for a fair quantification. For that reason, a 1-SSIM loss term is introduced as an extra regularization term in the objective function:
 
-![Screenshot](object_function.JPG)
+![Screenshot](docs/object_function.JPG)
 
 With generator G, discriminator D, and loss weights λ1 and λ2. Details about the definitions can be found in [[1]](#1). The DSSIM is based on the standard SSIM implementation from [[7]](#7). Training only stops after the specified number of steps since there is generally not a clear convergence criterion for GANs. The final model architectures and the training setup can be found in `model_util.py` and `train_util.py` respectively. 
 
