@@ -42,24 +42,64 @@ def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson'):
     resp_vec = pd.read_csv(filename, sep=',', header=0, index_col=0)
     resp_vec = resp_vec.loc[resp_vec['ID'].isin(subjects)]
     
-    #Calculate FNIRT dice scores and add as column to dataframe
-    DSCs = get_fnirt_DSC(datadir, sorted(subject_list)) 
-    resp_vec['DSC'] = DSCs
-    
+    #Calculate FSL dice scores and SSIM results. Add as columns to dataframe
+    SSIM_fsl, DSCs = get_fsl_metrics(datadir, sorted(subject_list)) 
+    resp_vec['DSC - FSL'] = DSCs
+    resp_vec['SSIM - FSL'] = SSIM_fsl
     #Add individual slice SSIMs
     resp_vec_copy = resp_vec[:0]
     for row in range(len(resp_vec)):
         for i in range(3):
             resp_vec_copy = resp_vec_copy.append(resp_vec[row:row+1])
-    resp_vec_copy['SSIM'] = SSIM_list
+    resp_vec_copy['SSIM - GAN'] = SSIM_list
     
     #Calculate  and return the correlation matrix
     resp_vec_def = resp_vec_copy.drop('ID', axis=1)
     correlations = resp_vec_def.corr(method)
+    plot_corr(resp_vec_def, correlations)
+    
     return correlations
 
-
-def get_fnirt_DSC(datadir, subject_list):
+def plot_corr(dataframe, correlations):
+    """
+    """
+    z=list(dataframe["DSC - FSL"])
+    y=list(dataframe["prepostT1pd_CORE"])
+    x=list(dataframe["ischHLV"])
+    v=list(dataframe["postNDS_sum"])
+    w=list(dataframe["SSIM - GAN"])
+    
+    fig = plt.figure()
+    plt.title("Response vector correlations")
+    ax1 = fig.add_subplot(3,2,1)
+    ax1.set_xlabel("DSC")
+    ax1.set_ylabel("ischHLV")
+    ax2 = fig.add_subplot(3,2,3)
+    ax2.set_xlabel("DSC")
+    ax2.set_ylabel("postNDS_sum")
+    ax3 = fig.add_subplot(3,2,5)
+    ax3.set_xlabel("DSC")
+    ax3.set_ylabel("prepostT1pd_CORE")
+    ax4 = fig.add_subplot(3,2,2)
+    ax4.set_xlabel("SSIM")
+    ax4.set_ylabel("ischHLV")
+    ax5 = fig.add_subplot(3,2,4)
+    ax5.set_xlabel("SSIM")
+    ax5.set_ylabel("postNDS_sum")
+    ax6 = fig.add_subplot(3,2,6)
+    ax6.set_xlabel("SSIM")
+    ax6.set_ylabel("prepostT1pd_CORE")
+    
+    #plots
+    ax1.scatter(z,x)
+    ax2.scatter(z,v)
+    ax3.scatter(z,y)
+    ax4.scatter(w,x)
+    ax5.scatter(w,v)
+    ax6.scatter(w,y)
+    return
+    
+def get_fsl_metrics(datadir, subject_list):
     """
     Calculates dice similarity coefficients between FNIRT masks and
     ground truth lesionmasks. 
@@ -67,6 +107,7 @@ def get_fnirt_DSC(datadir, subject_list):
     Output: list of DSCs for each subject
     """  
     DSC_list=[]
+    SSIM_list=[]
     #Load data directories
     fsl_subjectDirs=[]
     gt_subjectDirs=[]
@@ -82,21 +123,30 @@ def get_fnirt_DSC(datadir, subject_list):
         fsl_subjectDir = fsl_subjectDirs[subject_n]
         gt_subjectDir = gt_subjectDirs[subject_n]
         
-        fsl_mask = nib.load(os.path.join(fsl_subjectDir, "mask_fnirt.nii.gz"))
-        gt_mask  = nib.load(os.path.join(gt_subjectDir,  "day0_mask.nii.gz"))
-        fsl_mask_array = fsl_mask.get_fdata()
-        gt_mask_array = gt_mask.get_fdata()
+        fnirt_mask = nib.load(os.path.join(fsl_subjectDir, "mask_fnirt.nii.gz"))
+        flirt_mask = nib.load(os.path.join(fsl_subjectDir, "mask_flirt.nii.gz"))
+        fnirt_img  = nib.load(os.path.join(fsl_subjectDir, "bet_fnirt.nii.gz"))
+        flirt_img  = nib.load(os.path.join(fsl_subjectDir, "bet_flirt.nii.gz"))
+        fnirt_mask_array = fnirt_mask.get_fdata()
+        flirt_mask_array = flirt_mask.get_fdata()
+        fnirt_img_array = fnirt_img.get_fdata()
+        flirt_img_array = flirt_img.get_fdata()
+
         
-        #Make FNIRT masks binary
-        threshold_indices = fsl_mask_array != 0
-        fsl_mask_array[threshold_indices] = 1
+        #Make FLIRT/FNIRT masks binary
+        threshold_indices = fnirt_mask_array != 0
+        fnirt_mask_array[threshold_indices] = 1
+        threshold_indices = flirt_mask_array != 0
+        flirt_mask_array[threshold_indices] = 1
         
         #Calculate and DSC and append 
         #DSC = getDSC(fsl_mask_array, gt_mask_array)
-        DSC = getDSC(fsl_mask_array[:,11:14,:], gt_mask_array[:,11:14,:]) 
+        DSC = getDSC(fnirt_mask_array[:,11:14,:], flirt_mask_array[:,11:14,:]) 
+        SSIM = structural_similarity(flirt_img_array[:,11:14,:], fnirt_img_array[:,11:14,:])
         DSC_list.append(DSC)
+        SSIM_list.append(SSIM)
     
-    return DSC_list
+    return SSIM_list, DSC_list
 
 
 def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last"):

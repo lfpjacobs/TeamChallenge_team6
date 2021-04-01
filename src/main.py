@@ -1,12 +1,13 @@
 import sys
 if "" not in sys.path : sys.path.append("")
+if "src" not in sys.path : sys.path.append("src")
 
 import os
 from data_preperation import data_prep
 from preprocessing import preprocess_data
 from model import define_discriminator, define_generator, define_gan
 from training import train
-from evaluation import evaluate, get_fnirt_DSC, resp_vec_correlation
+from evaluation import evaluate, get_fsl_metrics, resp_vec_correlation, plot_corr
 from util.tf_session import setup_tf_session
 
 
@@ -58,7 +59,7 @@ def main(dataDir):
 
   print("Step 4: Evaluation")
   eval_SSIMs = evaluate(d_model, g_model, gan_model, dataset_test, time, specific_model="last")
-  eval_DSCs = get_fnirt_DSC(dataDir, test_subjects)
+  fsl_SSIM, fsl_DSC = get_fsl_metrics(dataDir, test_subjects)
   resp_vec_cor = resp_vec_correlation(dataDir, test_subjects, eval_SSIMs)
   print("Evaluation completed!\n")
 
