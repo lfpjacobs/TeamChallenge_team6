@@ -189,7 +189,7 @@ def normalize_img(img, range=(0, 1)):
     return img_norm
 
 
-def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, random_seed=1234):
+def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, random_seed=1234, verbose=False):
     """
     Main data preperation function.
     Note that currently, all training data is stored in memory.
@@ -228,7 +228,7 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, 
     for subject_n in range(len(subjectDirs)):
 
         subjectDir = subjectDirs[subject_n]
-        print(f"Extracting data for subject '{os.path.split(subjectDir)[-1]}' ({subject_n+1}/{len(subjectDirs)})...\t", end="", flush=True)
+        if verbose : print(f"Extracting data for subject '{os.path.split(subjectDir)[-1]}' ({subject_n+1}/{len(subjectDirs)})...\t", end="", flush=True)
 
         img_src = nib.load(os.path.join(subjectDir, "day4_img.nii.gz"))
         img_tar = nib.load(os.path.join(subjectDir, "day0_img.nii.gz"))
@@ -263,10 +263,10 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, 
             tar_array[j] = img_tar_crop[:,:,slice_i]
             j += 1
             
-        print("Completed")
+        if verbose : print("Completed")
 
     if np.shape(src_array)[2] > 0:
-        print(f"\nCompleted data extraction!\nFound a total of {np.shape(src_array)[0]} slices\n")
+        if verbose : print(f"\nCompleted data extraction!\nFound a total of {np.shape(src_array)[0]} slices\n")
         if not np.shape(src_array)[0] == np.shape(tar_array)[0] : raise ValueError("There aren't as many source as target images. Check for missing files.")
     else:
         raise ValueError("The selected data directory doesn't contain any properly formatted data")
