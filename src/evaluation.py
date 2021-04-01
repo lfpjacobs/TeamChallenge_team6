@@ -44,14 +44,15 @@ def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson'):
     
     #Calculate FSL dice scores and SSIM results. Add as columns to dataframe
     SSIM_fsl, DSCs = get_fsl_metrics(datadir, sorted(subject_list)) 
-    resp_vec['DSC - FSL'] = DSCs
-    resp_vec['SSIM - FSL'] = SSIM_fsl
+
     #Add individual slice SSIMs
     resp_vec_copy = resp_vec[:0]
     for row in range(len(resp_vec)):
         for i in range(3):
             resp_vec_copy = resp_vec_copy.append(resp_vec[row:row+1])
     resp_vec_copy['SSIM - GAN'] = SSIM_list
+    resp_vec_copy['DSC - FSL'] = DSCs
+    resp_vec_copy['SSIM - FSL'] = SSIM_fsl
     
     #Calculate  and return the correlation matrix
     resp_vec_def = resp_vec_copy.drop('ID', axis=1)
@@ -140,12 +141,12 @@ def get_fsl_metrics(datadir, subject_list):
         flirt_mask_array[threshold_indices] = 1
         
         #Calculate and DSC and append 
-        #DSC = getDSC(fsl_mask_array, gt_mask_array)
-        DSC = getDSC(fnirt_mask_array[:,11:14,:], flirt_mask_array[:,11:14,:]) 
-        SSIM = structural_similarity(flirt_img_array[:,11:14,:], fnirt_img_array[:,11:14,:])
-        DSC_list.append(DSC)
-        SSIM_list.append(SSIM)
-    
+        for i in range(3):
+            DSC = getDSC(fnirt_mask_array[:,11+i,:], flirt_mask_array[:,11+i,:])
+            SSIM = structural_similarity(flirt_img_array[:,11+i,:], fnirt_img_array[:,11+i,:])
+            DSC_list.append(DSC)
+            SSIM_list.append(SSIM)
+        
     return SSIM_list, DSC_list
 
 
