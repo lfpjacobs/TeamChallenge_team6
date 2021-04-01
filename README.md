@@ -15,6 +15,8 @@ The necessary file structure to run the example notebook with using the correspo
 |          -- raw / *               % Directory used to store raw (immutable) data
 |          | 
 |          -- referencerat / *      % Directory used to store atlases
+|	   |
+|	   -- responsvecs.xlsx      % Excel file containing physical metrics per subject
 | 
 |--- models / *                     % Directory used to store model weights
 |
