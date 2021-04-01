@@ -103,8 +103,8 @@ def summarize_performance(step, g_model, dataset_train, dataset_val, modelsDir, 
     realB_val = (X_realB_val[0] - np.min(X_realB_val[0])) / scale_val
 
     # log images
-    logger.log_images('run_{}_step{}_train'.format(run, step), [realA_train, fakeB_train, realB_train], step)
-    logger.log_images('run_{}_step{}_val'.format(run, step), [realA_val, fakeB_val, realB_val], step)
+    logger.log_images('run_{}_step{:07d}_train'.format(run, step), [realA_train, fakeB_train, realB_train], step+1)
+    logger.log_images('run_{}_step{:07d}_val'.format(run, step), [realA_val, fakeB_val, realB_val], step+1)
 
 
 def check_ssim(g_model, dataset, n_samples=3):
