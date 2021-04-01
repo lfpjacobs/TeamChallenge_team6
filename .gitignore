@@ -354,6 +354,7 @@ MigrationBackup/
 /models/*
 /data/*
 /logs/*
+*checkpoint*
 
 !/models/README.txt
 !/data/README.txt
