@@ -162,7 +162,7 @@ def split_train_val(dataset, split_factor=0.8):
 
     return dataset_train, dataset_val
 
-def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4): 
+def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4, n_aug = 20): 
     """
     Train the generator and discriminator models
     """
@@ -178,8 +178,6 @@ def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4):
 
 	# determine the output square shape of the discriminator
     n_patch = d_model.output_shape[1]
-	
-    n_aug = 20 # number of fresh augmentations per epoch 
     
     # Split training set in train and validation sets
     dataset_train, dataset_val = split_train_val(dataset_train)
