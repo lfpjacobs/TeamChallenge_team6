@@ -150,7 +150,7 @@ def get_fsl_metrics(datadir, subject_list):
     return SSIM_list, DSC_list
 
 
-def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last"):
+def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last", verbose=True, show_fig=True):
     """"
     Evaluation function for trained GAN
     input: generator model & test set image pairs
@@ -169,7 +169,7 @@ def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last"):
     
     #Plot results
     SSIM_list = []
-    fig, ax = plt.subplots(4, len(true_day4), figsize=(25, 10))
+    if show_fig : fig, ax = plt.subplots(len(true_day4), 4, figsize=(14, len(true_day4)*3))
     for i in range(len(true_day4)):
         pred_d0 = predicted_day0[i].reshape(256,256)
         true_d0 = np.float32(true_day0[i].reshape(256,256))
@@ -177,28 +177,30 @@ def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last"):
         
         SSIM, ssim_map = structural_similarity(pred_d0, true_d0, full=True)
 
-        ax[0,i].imshow(pred_d0, cmap='gray')
-        ax[0,i].axis('off')
-        ax[0,i].set_title('Pred d0 subject {}'.format(i))
-        
-        ax[1,i].imshow(true_d0, cmap='gray')
-        ax[1,i].axis('off')
-        ax[1,i].set_title('True d0 subject {}'.format(i))
-        
-        ax[2,i].imshow(ssim_map, cmap='gray')
-        ax[2,i].axis('off')
-        ax[2,i].set_title('SSIM map subject {}'.format(i))
-        
-        ax[3,i].imshow(true_d4, cmap='gray')
-        ax[3,i].axis('off')
-        ax[3,i].set_title('True d4 subject {}'.format(i))
+        if show_fig:
+            ax[i,0].imshow(pred_d0, cmap='gray')
+            ax[i,0].axis('off')
+            ax[i,0].set_title('Fake d0 slice {}'.format(i))
+            
+            ax[i,1].imshow(true_d0, cmap='gray')
+            ax[i,1].axis('off')
+            ax[i,1].set_title('True d0 slice {}'.format(i))
+            
+            ax[i,2].imshow(true_d4, cmap='gray')
+            ax[i,2].axis('off')
+            ax[i,2].set_title('True d4 slice {}'.format(i))
+
+            ax[i,3].imshow(ssim_map, cmap='gray')
+            ax[i,3].axis('off')
+            ax[i,3].set_title('SSIM map slice {}'.format(i))
 
         # quantified structural deformation
         SSIM_def = structural_similarity(pred_d0, true_d4) 
         SSIM_list.append(SSIM_def)
         
-        print("SSIM (day0 v day0_pred) of subject {}: ".format(i), SSIM) # you want this to be 1
-        print("SSIM (day4 v day0_pred) of subject {}: ".format(i), SSIM_def) # deformation
+        if verbose:
+            print("SSIM (day0 v day0_pred) for slice {}: ".format(i), SSIM) # you want this to be 1
+            print("SSIM (day4 v day0_pred) for slice {}: ".format(i), SSIM_def) # deformation
         
     return SSIM_list
       
