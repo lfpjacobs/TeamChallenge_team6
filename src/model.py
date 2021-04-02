@@ -1,7 +1,14 @@
-import sys
-if "" not in sys.path : sys.path.append("")
+"""
+This code is adapted from the paper of Phillip Isola, et al. in their 2016 paper titled 
+"Image-to-Image Translation with Conditional Adversarial Networks"
+
+Available from: https://github.com/phillipi/pix2pix
+"""
 
 import tensorflow as tf
+import numpy as np
+import sys
+if "" not in sys.path : sys.path.append("")
 from keras.optimizers import Adam
 from keras.initializers import RandomNormal
 from keras.models import Model
@@ -14,10 +21,15 @@ from keras.layers import Concatenate
 from keras.layers import Dropout
 from keras.layers import BatchNormalization
 
-
 def define_discriminator(image_shape):
-
-	# weight initialization
+    """
+    This function implements the 70×70 PatchGAN discriminator model as per the 
+    design of the model in the paper. 
+    
+    Input - Two (concatenated) input images 
+    Output - Patch output of predictions
+    """
+    # weight initialization
     init = RandomNormal(stddev=0.02)
 	# source image input
     in_src_image = Input(shape=image_shape)
@@ -54,8 +66,10 @@ def define_discriminator(image_shape):
     model.compile(loss='binary_crossentropy', optimizer=opt, loss_weights=[0.5])
     return model
 
-# define an encoder block
 def define_encoder_block(layer_in, n_filters, batchnorm=True):
+    """
+    Create blocks of layers for the encoder
+    """
 	# weight initialization
     init = RandomNormal(stddev=0.02)
 	# add downsampling layer
@@ -67,8 +81,10 @@ def define_encoder_block(layer_in, n_filters, batchnorm=True):
     g = LeakyReLU(alpha=0.2)(g)
     return g
 
-# define a decoder block
 def decoder_block(layer_in, skip_in, n_filters, dropout=True):
+    """
+    Create blocks of layers for the decoder
+    """
 	# weight initialization
     init = RandomNormal(stddev=0.02)
 	# add upsampling layer
@@ -84,9 +100,10 @@ def decoder_block(layer_in, skip_in, n_filters, dropout=True):
     g = Activation('relu')(g)
     return g
 
-# define the standalone generator model
 def define_generator(image_shape=(256,256,3)):
-
+    """
+    Implement the U-Net encoder-decoder generator model
+    """
 	# weight initialization
     init = RandomNormal(stddev=0.02)
 	# image input
@@ -110,26 +127,30 @@ def define_generator(image_shape=(256,256,3)):
     d5 = decoder_block(d4, e3, 256, dropout=False)
     d6 = decoder_block(d5, e2, 128, dropout=False)
     d7 = decoder_block(d6, e1, 64, dropout=False)
-    
-	# Changed the 1 below from 3 (gray ipv RGB)
     g = Conv2DTranspose(1, (4,4), strides=(2,2), padding='same', kernel_initializer=init)(d7)
     out_image = Activation('tanh')(g)
 	# define model
     model = Model(in_image, out_image)
     return model
 
-# Loss function
-def ssim_loss(y_true, y_pred):
-    '''
+def DSSIM_loss(y_true, y_pred):
+    """
+    Additional generator regularization term for objective function
+    
     This function is based on the standard SSIM implementation from: 
     Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004). 
     Image quality assessment: from error visibility to structural similarity. 
     IEEE transactions on image processing.
-    '''
-    return 1 - tf.image.ssim(y_true, y_pred, max_val=1.0)[0] #first (and only) one in the batch
+    """
+#    return 1 - tf.image.ssim(y_true, y_pred, max_val=1.0)[0] # DSSIM = 1 - SSIM
+    return 1 - np.mean(tf.image.ssim(y_true, y_pred, max_val=1.0)) # DSSIM = 1 - SSIM
 
 # define the combined generator and discriminator model, for updating the generator
 def define_gan(g_model, d_model, image_shape):
+    """
+    Connects the generator and discriminator into a composet model and 
+    implementing the corresponding loss functions.
+    """
 	# make weights in the discriminator not trainable
     for layer in d_model.layers:
         if not isinstance(layer, BatchNormalization):
@@ -146,5 +167,5 @@ def define_gan(g_model, d_model, image_shape):
 
 	# compile model
     opt = Adam(lr=0.0002, beta_1=0.5)
-    model.compile(loss=['binary_crossentropy', 'mae', ssim_loss], optimizer=opt, loss_weights=[1, 10, 10])
+    model.compile(loss=['binary_crossentropy', 'mae', DSSIM_loss], optimizer=opt, loss_weights=[1, 10, 10])
     return model

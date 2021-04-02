@@ -1,6 +1,12 @@
+"""
+This code is adapted from the paper of Phillip Isola, et al. in their 2016 paper titled 
+"Image-to-Image Translation with Conditional Adversarial Networks"
+
+Available from: https://github.com/phillipi/pix2pix
+"""
+
 import sys
 if "" not in sys.path : sys.path.append("")
-
 import os
 import numpy as np
 import tensorflow as tf
@@ -10,28 +16,29 @@ from tqdm import tqdm
 import warnings
 from numpy import load
 from numpy import zeros
-from numpy import ones
-from numpy.random import randint
 from augmentation import augment
 from datetime import datetime
 from skimage.metrics import structural_similarity
 from util.general import print_style
 
-# load and prepare training images
 def load_real_samples(filename):
-	# load compressed arrays
+    """
+    Load paired images dataset
+    """
+    # load compressed arrays
     data = load(filename)
-	# unpack arrays
+    # unpack arrays
     X1, X2 = data['arr_0'], data['arr_1']
-	# scale from [0,255] to [-1,1]
+    # scale from [0,255] to [-1,1]
     X1 = (X1 - 127.5) / 127.5
     X2 = (X2 - 127.5) / 127.5
+    # output source images and corresponding target images
     return [X1, X2]
-
 
 def generate_real_samples(dataset, n_samples, patch_shape, available_idx=None):
     """
-    Function that selects a batch of random samples from a list of available ones, returns images and target.
+    Prepare a batch of random pairs of images from the training dataset, and 
+    the corresponding discriminator label of class=1 to indicate they are real
     """
     # unpack dataset
     trainA, trainB = dataset
@@ -51,42 +58,49 @@ def generate_real_samples(dataset, n_samples, patch_shape, available_idx=None):
 
     return [X1, X2], y, ix
 
-# generate a batch of images, returns images and targets
 def generate_fake_samples(g_model, samples, patch_shape):
+    """
+    Use the generator model and a batch of real source images to generate an 
+    equivalent batch of target images for the discriminator
+    """
 	# generate fake instance
     X = g_model.predict(samples)
 	# create 'fake' class labels (0)
     y = zeros((len(X), patch_shape, patch_shape, 1))
     return X, y
 
-# create a logging object to log scalar losses and images to Tensorboard
 class Logger(object):
+    """
+    Create a logging object to log scalar losses and images to Tensorboard
+    """
     def __init__(self, log_dir):
         self.writer = tf.summary.create_file_writer(log_dir)
 
-    def log_scalar(self, tag, value, step):
+    def log_scalar(self, tag, value, step): # for losses
         with self.writer.as_default():
             tf.summary.scalar(tag, value, step=step)
             self.writer.flush()
     
-    def log_images(self, tag, images, step):
+    def log_images(self, tag, images, step): # for images
         with self.writer.as_default():
             tf.summary.image(tag, np.asarray(images), max_outputs=len(images), step=step)
             self.writer.flush()
               
-# generate samples and save as a plot and save the model
 def summarize_performance(step, g_model, dataset_train, dataset_val, modelsDir, logger, run, n_samples=3):
-	# select a sample of input images
+    """
+    Review the generated images at the end of training and save model and images
+    """
+    # select a sample of input images
     [X_realA_train, X_realB_train], _, _ = generate_real_samples(dataset_train, n_samples, 1)
-	# generate a batch of fake samples
+    # generate a batch of fake samples
     X_fakeB_train, _ = generate_fake_samples(g_model, X_realA_train, 1)
-
+    
     # select a sample of input images
     [X_realA_val, X_realB_val], _, _ = generate_real_samples(dataset_val, n_samples, 1)
-	# generate a batch of fake samples
+    # generate a batch of fake samples
     X_fakeB_val, _ = generate_fake_samples(g_model, X_realA_val, 1)
-	
-	# save the generator model
+    	
+    # save the generator model
     filename = os.path.join(modelsDir,'g_model_{:07d}.h5'.format((step+1)))
     g_model.save(filename)
     print('>Saved model: {}s'.format(filename))
@@ -106,8 +120,10 @@ def summarize_performance(step, g_model, dataset_train, dataset_val, modelsDir, 
     logger.log_images('run_{}_step{:07d}_train'.format(run, step), [realA_train, fakeB_train, realB_train], step+1)
     logger.log_images('run_{}_step{:07d}_val'.format(run, step), [realA_val, fakeB_val, realB_val], step+1)
 
-
 def check_ssim(g_model, dataset, n_samples=3):
+    """
+    Compute the structural similarity index (SSIM) between two images
+    """
     # select a sample of input images
     [X_realA, X_realB], _, _ = generate_real_samples(dataset, n_samples, 1)
 	# generate a batch of fake samples
@@ -117,12 +133,10 @@ def check_ssim(g_model, dataset, n_samples=3):
     
     return SSIM
 
-
 def split_train_val(dataset, split_factor=0.8):
     """
-    This function is used to split the training set into a separate training- and test-set.
+    Split the training set into a separate trainingset and validationset.
     """
-    
     dataset_size = np.shape(dataset)
     train_len = math.floor(dataset_size[1]*split_factor)
     val_len = math.floor(dataset_size[1]*(1-split_factor))
@@ -148,8 +162,10 @@ def split_train_val(dataset, split_factor=0.8):
 
     return dataset_train, dataset_val
 
-# train pix2pix model
-def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4):    
+def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4): 
+    """
+    Train the generator and discriminator models
+    """
     # Extract current time for model/plot save files
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d_%H-%M-%S")
@@ -163,9 +179,7 @@ def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4):
 	# determine the output square shape of the discriminator
     n_patch = d_model.output_shape[1]
 	
-    n_aug = 20 # number of augmentations per epoch (so after step 22*5=110, i.e. epoch 1, the images are freshly augmented)
-    # value of 5 is just for ease of testing
-    # 22 training images, n_aug = 2 --> 44 (newly augmented) training images each epoch
+    n_aug = 20 # number of fresh augmentations per epoch 
     
     # Split training set in train and validation sets
     dataset_train, dataset_val = split_train_val(dataset_train)
@@ -184,8 +198,6 @@ def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4):
 
 	# calculate the number of batches per training epoch
     bat_per_epo = int(len(trainA_ori)*n_aug / n_batch) # for us: 22*n_aug
-	# calculate the number of training iterations
-    n_steps = bat_per_epo * n_epochs # for us: 2200*n_aug
 	  
     # Define loggers for losses, images and similarity metrics
     logger_g = Logger(os.path.join(logsDir, "gen"))
@@ -221,17 +233,6 @@ def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4):
                 A[rand_i[k]] = trainA_aug
                 B[rand_i[k]] = trainB_aug
                 k += 1
-
-                # Write images for debugging purposes
-                # filename_realA = os.path.join("data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_realA.png")
-                # filename_A = os.path.join("data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_A.png")
-                # filename_B = os.path.join("data", "aug_debug", str(i)+"_"+str(n)+"_"+str(j)+"_B.png")
-                # debug_img_realA = Image.fromarray((255*trainA_ori[j].reshape((256, 256))).astype(np.uint8))
-                # debug_imgA = Image.fromarray((255*trainA_aug.reshape((256, 256))).astype(np.uint8))
-                # debug_imgB = Image.fromarray((255*trainB_aug.reshape((256, 256))).astype(np.uint8))
-                # debug_img_realA.save(filename_realA)
-                # debug_imgA.save(filename_A)
-                # debug_imgB.save(filename_B)
                 
         dataset_aug = [A, B] # all trainingdata (day4 and day1)
         print("Completed")
@@ -240,7 +241,6 @@ def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4):
 
             # select a batch of real samples
             [X_realA, X_realB], y_real, used_idx = generate_real_samples(dataset_aug, n_batch, n_patch, available_idx)
-
             np.delete(available_idx, used_idx)
 
             # generate a batch of fake samples
@@ -266,9 +266,9 @@ def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4):
             # Store similarities (tensorboard)
             if (i+1) % (bat_per_epo // 20) == 0:
                 similarity_train = check_ssim(g_model, dataset_train, 1)
-                similarity_val = check_ssim(g_model, dataset_val, 1) # should probably select one validation slice instead
+                similarity_val = check_ssim(g_model, dataset_val, 1)
                 
-                logger_train.log_scalar('run_{}'.format(current_time), similarity_train, i) # higher is better (more similar)
+                logger_train.log_scalar('run_{}'.format(current_time), similarity_train, i)
                 logger_val.log_scalar('run_{}'.format(current_time), similarity_val, i)
 
             i += 1
@@ -276,4 +276,5 @@ def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4):
         print('>Losses: d1[%.3f] d2[%.3f] g[%.3f]' % (d_loss1, d_loss2, g_loss))
         summarize_performance(i, g_model, dataset_train, dataset_val, modelsDir, logger_im, current_time)
     
+    # output current_time so a model can be selected from the correct directory
     return current_time
