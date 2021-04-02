@@ -6,11 +6,32 @@ import scipy
 import scipy.stats
 import matplotlib.pyplot as plt
 import os
+import warnings
 import nibabel as nib
 import pandas as pd
 import seaborn as sns
 from keras.models import load_model
 from skimage.metrics import structural_similarity
+
+
+def calc_def_scores(SSIM_list, subject_list, verbose=False):
+    """
+    This function simply calculates deformation scores based on SSIM scores.
+    It's a very simple function, since it's just a linear transformation.
+    """
+
+    # Perform linear transform from [1 - 0 (-1)] to [0, 1]
+    def_list_slice = [(1 - SSIM) for SSIM in SSIM_list]
+
+    # Calculate deformation per subject
+    def_list_subject = [np.mean(def_list_slice[i:i+3]) for i in range(len(subject_list))]
+
+    # Print results (if applicable)
+    if verbose:
+        for i in range(len(subject_list)):
+            print(f"Deformation for subject {subject_list[i][-2:]}:\t{def_list_subject[i]:.4f} [0-1]")
+
+    return def_list_subject
 
 
 def getDSC(testImage, resultImage):
@@ -24,7 +45,9 @@ def getDSC(testImage, resultImage):
     resultArray = resultImage.flatten()
     
     # similarity = 1.0 - dissimilarity
-    return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
 
 
 def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson', show_fig=True):
@@ -152,16 +175,19 @@ def get_fsl_metrics(datadir, subject_list):
     return SSIM_list, DSC_list
 
 
-def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last", verbose=False, show_fig=False):
+def evaluate(d_model, g_model, gan_model, dataset, subject_list, time, specific_model="last", verbose=False, show_fig=False):
     """"
     Evaluation function for trained GAN
     input: generator model & test set image pairs
     output: registered test images & DSC
     """
-    # load model, gebeurt nu niks mee, maar dit zou in functie parameters kunnen om een specifiek model te evalueren
+    # If applicable, load a specific model
     if specific_model != "last":
         model_dir = os.path.join("models", f"run_{time}")
-        g_model = load_model(os.path.join(model_dir, 'g_model_{}.h5'.format(specific_model))) # e.g. 0029400  
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            g_model = load_model(os.path.join(model_dir, 'g_model_{}.h5'.format(specific_model))) # e.g. 0029400  
     
     #Preprocess test set
     true_day4, true_day0 = dataset 
@@ -177,24 +203,25 @@ def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last", 
         true_d0 = np.float32(true_day0[i].reshape(256,256))
         true_d4 = np.float32(true_day4[i].reshape(256,256))
         
-        SSIM, ssim_map = structural_similarity(pred_d0, true_d0, full=True)
+        SSIM, _ = structural_similarity(pred_d0, true_d0, full=True)
+        _, ssim_map = structural_similarity(pred_d0, true_d4, full=True)
 
         if show_fig:
             ax[i,0].imshow(pred_d0, cmap='gray')
             ax[i,0].axis('off')
-            ax[i,0].set_title('Fake d0 slice {}'.format(i))
+            ax[i,0].set_title('Fake day 0 - rat {}, slice {}'.format(subject_list[i//3][-2:], (i%3) + 1))
             
             ax[i,1].imshow(true_d0, cmap='gray')
             ax[i,1].axis('off')
-            ax[i,1].set_title('True d0 slice {}'.format(i))
+            ax[i,1].set_title('True day 0 - rat {}, slice {}'.format(subject_list[i//3][-2:], (i%3) + 1))
             
             ax[i,2].imshow(true_d4, cmap='gray')
             ax[i,2].axis('off')
-            ax[i,2].set_title('True d4 slice {}'.format(i))
+            ax[i,2].set_title('True day 4 - rat {}, slice {}'.format(subject_list[i//3][-2:], (i%3) + 1))
 
-            ax[i,3].imshow(ssim_map, cmap='gray')
+            ax[i,3].imshow(0.5*(1 - ssim_map), cmap='gray')
             ax[i,3].axis('off')
-            ax[i,3].set_title('SSIM map slice {}'.format(i))
+            ax[i,3].set_title('Pred deformation map - rat {}, slice {}'.format(subject_list[i//3][-2:], (i%3) + 1))
 
         # quantified structural deformation
         SSIM_def = structural_similarity(pred_d0, true_d4) 
