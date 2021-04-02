@@ -17,12 +17,16 @@ def inspect_data(dataset, n_samples=20, show_fig=True):
     This function is used to generate a quality assessment figure.
     It simply generates a couple of subplots, randomly chosen from the passed dataset.
     """
+    
+    # Get random samples
     idx = random.sample(range(np.shape(dataset)[1]), n_samples)
 
     dim = math.ceil(n_samples**0.5)
-
+    
+    # Initialize a figure
     fig = plt.figure(figsize=(20, int(n_samples/(2*dim) + 1) * 5))
 
+    # Quality assessment along dimension, visualised in a plot
     for i in range(n_samples):
         id = idx[i]
         array_fig = np.concatenate((dataset[0][id], dataset[1][id]), axis=1)
@@ -39,7 +43,7 @@ def inspect_data(dataset, n_samples=20, show_fig=True):
 
 def generate_importance_map(map_size):
     """
-    This small function generates a weighted map of "where we want the brain to be".
+    This function generates a weighted map of "where we want the brain to be".
     It is thus 1 at the center and 0 at the edges.
     """
     importance_map = np.zeros(map_size)
@@ -176,15 +180,16 @@ def crop_brain(src_img, tar_img, subject_name, importance_map, crop_size=(128, 1
 def histogram_equalization(img, number_bins=256):
     """
     This function performs histogram equalization.
-    It is used as a preprocessing step
+    It is used as a preprocessing step.
+    Output is a processed image.
     """
 
-    # get image histogram
+    # Get image histogram
     img_histogram, bins = np.histogram(img.flatten(), number_bins, density=True)
     cdf = img_histogram.cumsum() # cumulative distribution function
     cdf = 255 * cdf / cdf[-1] # normalize
 
-    # use linear interpolation of cdf to find new pixel values
+    # Use linear interpolation of cdf to find new pixel values
     img_equalized = np.interp(img.flatten(), bins[:-1], cdf)
     img_equalized = (img_equalized - np.min(img_equalized)) / (np.max(img_equalized) - np.min(img_equalized))
 
@@ -193,7 +198,8 @@ def histogram_equalization(img, number_bins=256):
 
 def standardize_img(img):
     """
-    This function standardizes an image
+    This function standardizes an image. It changes the image distribution so it has a mean of 0 and a standard deviation of 1. 
+    Output is a standardized image.
     """
 
     img_std = (img - np.mean(img)) / np.std(img)
@@ -207,6 +213,7 @@ def normalize_img(img, range=(0, 1)):
     It sets a minimum and a certain standard deviation. 
     This solution should resolve some issues (standardize method) with low pixel values around important structures, 
     while background etc. had very high pixel values.
+    Output is a normalized image.
     """
     min, std = range
 
@@ -218,6 +225,7 @@ def normalize_img(img, range=(0, 1)):
 def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, random_seed=1234, verbose=False):
     """
     Main data preperation function.
+    
     Note that currently, all training data is stored in memory.
     Additionally, the model is trained on 2D slices of the data.
     Also, only DWI-B0 images are taken into account.
@@ -225,7 +233,8 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, 
     
     # Define required path and (if applicable) make a division for train/test sets
     subjectDirs = glob(os.path.join(datadir, "rat*"))
-
+    
+    # Split dataset into split_factor, randomly
     if split_dataset:
         random.Random(random_seed).shuffle(subjectDirs)
         if train_or_test.lower() == "train":
@@ -239,23 +248,27 @@ def data_prep(datadir, split_dataset=False, train_or_test="", split_factor=0.7, 
     else:
         raise ValueError("split_dataset should be either True or False")
 
-    # Predifine some parameters needed for brain extraction
+   
+ # Predifine some parameters needed for brain extraction
     crop_size = (128, 128, 3)
     importance_map = generate_importance_map(crop_size)
+    
     # Make brain extraction visualisation directory
     if not os.path.isdir((os.path.join("data", "preprocessed", "brain_extraction"))):
         os.mkdir((os.path.join("data", "preprocessed", "brain_extraction")))
 
-    # initialize data
+    # Initialize data
     src_array = np.zeros((len(subjectDirs)*crop_size[2], 256, 256))
     tar_array = np.zeros((len(subjectDirs)*crop_size[2], 256, 256))
     j = 0
+   
     # Iteratively loop over subjects and extract data
     for subject_n in range(len(subjectDirs)):
 
         subjectDir = subjectDirs[subject_n]
         if verbose : print(f"Extracting data for subject '{os.path.split(subjectDir)[-1]}' ({subject_n+1}/{len(subjectDirs)})...\t", end="", flush=True)
 
+        # Get day 0 and day 4 for subject_n
         img_src = nib.load(os.path.join(subjectDir, "day4_img.nii.gz"))
         img_tar = nib.load(os.path.join(subjectDir, "day0_img.nii.gz"))
 
