@@ -11,8 +11,8 @@ def augment(imA, imB):
     Input day0 and day4 image of the same rat
     An augmented version of both is returned
     """
-    
-    imA = imA.reshape((256,256)) #"3D" to 2D
+    #"3D" to 2D
+    imA = imA.reshape((256,256)) 
     imB = imB.reshape((256,256))
     
     # Define random deformation matrix
@@ -20,6 +20,7 @@ def augment(imA, imB):
     random_grid -= 0.5
     random_grid /= 10
     
+    # Define B-Spline transformation matrix
     bspline = gryds.BSplineTransformation(random_grid)
     
     # Define random translation matrix
@@ -28,7 +29,7 @@ def augment(imA, imB):
     # Define random rotation matrix
     a_rotation = gryds.AffineTransformation(
         ndim=2,
-        angles=[random.uniform(-np.pi/24, np.pi/24)],
+        angles=[random.uniform(-np.pi/24, np.pi/24)], # ± 7 degrees
         center=[0.5, 0.5]
     )
 
@@ -48,7 +49,8 @@ def augment(imA, imB):
     noise_mapB = np.random.normal(mu, sigma, size = np.size(imB)).reshape((256, 256))
     noise_mapA[transformed_imageA < 1e-2] = 0.
     noise_mapB[transformed_imageB < 1e-2] = 0.
-
+    
+    # Add noise to augmented image
     transformed_imageA = transformed_imageA + noise_mapA
     transformed_imageB = transformed_imageB + noise_mapB
 
