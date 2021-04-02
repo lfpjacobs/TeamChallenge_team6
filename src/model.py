@@ -6,7 +6,6 @@ Available from: https://github.com/phillipi/pix2pix
 """
 
 import tensorflow as tf
-import numpy as np
 import sys
 if "" not in sys.path : sys.path.append("")
 from keras.optimizers import Adam
@@ -142,8 +141,9 @@ def DSSIM_loss(y_true, y_pred):
     Image quality assessment: from error visibility to structural similarity. 
     IEEE transactions on image processing.
     """
-#    return 1 - tf.image.ssim(y_true, y_pred, max_val=1.0)[0] # DSSIM = 1 - SSIM
-    return 1 - np.mean(tf.image.ssim(y_true, y_pred, max_val=1.0)) # DSSIM = 1 - SSIM
+    # DSSIM = 1 - SSIM
+    # Take the average of your batch losses
+    return 1 - tf.reduce_mean(tf.image.ssim(y_true, y_pred, max_val=1.0))
 
 # define the combined generator and discriminator model, for updating the generator
 def define_gan(g_model, d_model, image_shape):
