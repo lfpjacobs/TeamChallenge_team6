@@ -78,6 +78,8 @@ def plot_corr(dataframe, correlations):
     dim = len(relevant_data * 5)
     plt.figure(figsize=(dim, dim))
 
+    color_scale = sns.color_palette("YlOrRd", 100)
+
     for i in range(len(relevant_data)**2):
         plt.subplot(len(relevant_data), len(relevant_data), i+1)
 
@@ -86,14 +88,15 @@ def plot_corr(dataframe, correlations):
         x_data = relevant_data[x_pos]
         y_data = relevant_data[y_pos]
 
-        if x_pos != y_pos and not (x_pos > 2 and y_pos > 2):         
-            sns.regplot(x=x_data, y=y_data, data=dataframe)
+        if x_pos != y_pos and not (x_pos > 2 and y_pos > 2):
+            correlation = correlations[x_data][y_data]  
+            sns.scatterplot(x=x_data, y=y_data, data=dataframe, color=".1")
+            sns.regplot(x=x_data, y=y_data, data=dataframe, scatter=False, color=color_scale[min(int(abs(correlation)*150) - 1, 99)])
         else:
             plt.xticks([], [])
             plt.yticks([], [])
 
     plt.tight_layout()
-
     plt.show()
     
     return
