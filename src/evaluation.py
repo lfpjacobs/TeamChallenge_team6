@@ -40,8 +40,11 @@ def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson'):
     #Read response vectors from csv file into dataframe and parse
     filename = os.path.join(datadir, "responsevecs_TC20analysis210113.csv")
     resp_vec = pd.read_csv(filename, sep=',', header=0, index_col=0)
+
+    resp_vec['ID'].apply(int)
+    subjects = [int(subject) for subject in subjects]
     resp_vec = resp_vec.loc[resp_vec['ID'].isin(subjects)]
-    
+
     #Calculate FSL dice scores and SSIM results. Add as columns to dataframe
     SSIM_fsl, DSCs = get_fsl_metrics(datadir, sorted(subject_list)) 
 
@@ -58,7 +61,7 @@ def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson'):
     resp_vec_def = resp_vec_copy.drop('ID', axis=1)
     correlations = resp_vec_def.corr(method)
     plot_corr(resp_vec_def, correlations)
-    
+
     return correlations
 
 def plot_corr(dataframe, correlations):
