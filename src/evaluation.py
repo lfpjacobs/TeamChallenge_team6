@@ -38,13 +38,14 @@ def getDSC(testImage, resultImage):
     """
     Helper function:
     Compute the Dice Similarity Coefficient for image pair.
-    Input needs to be 3D array. 
+    Input: image pair (array), can be 3D image
+    Output: DSC
     """
-
+    # Collapse array
     testArray   = testImage.flatten()
     resultArray = resultImage.flatten()
     
-    # similarity = 1.0 - dissimilarity
+    # Similarity = 1.0 - dissimilarity
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
@@ -52,16 +53,18 @@ def getDSC(testImage, resultImage):
 
 def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson', show_fig=True):
     """
-    Calculates correlation matrix for response vectors, DSC and SSIM
-    for given subjects. Method is either 'pearson', 'kendall', 'spearman' 
-    or callable. 
+    Calculates correlation matrix for response vectors, FSL DSC & SSIM, and 
+    cGAN resulting SSIM for given subjects. Method is either 'pearson',
+    'kendall', 'spearman' or callable.
+    Input: directory containing the data, subjects to be correlated (test set), GAN SSIM scores
+    Output: dataframe with correlations (matrix)
     """
-    #Store subjects for correctly parsing dataframe
+    # Store subjects for correctly parsing dataframe
     subjects=[]
     for subject in range(len(subject_list)):
         subjects.append(subject_list[subject][-2:])
 
-    #Read response vectors from csv file into dataframe and parse
+    # Read response vectors from csv file into dataframe and parse
     filename = os.path.join(datadir, "responsevecs_TC20analysis210113.csv")
     resp_vec = pd.read_csv(filename, sep=',', header=0, index_col=0)
 
@@ -91,7 +94,7 @@ def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson', s
 
 def plot_corr(dataframe, correlations):
     """
-    This function generates a figure
+    This function generates a figure to visualize the correlations
     """
     
     # Define relevant data
@@ -127,14 +130,16 @@ def plot_corr(dataframe, correlations):
 
 def get_fsl_metrics(datadir, subject_list):
     """
-    Calculates dice similarity coefficients between FNIRT masks and
-    ground truth lesionmasks. 
-    Input: data directory, subject to calculate DSC
-    Output: list of DSCs for each subject
+    Calculates both dice similarity coefficients between FNIRT masks and
+    ground truth lesionmasks as well as SSIM between FNIRT and FLIRT images. 
+    Input: data directory, subjects to calculate DSC and SSIM
+    Output: list of DSCs and SSIM for each slice of each subject
     """  
+    # Initialize output lists
     DSC_list=[]
     SSIM_list=[]
-    #Load data directories
+    
+    # Load data directories
     fsl_subjectDirs=[]
     gt_subjectDirs=[]
     for subject in range(len(subject_list)):
@@ -144,11 +149,11 @@ def get_fsl_metrics(datadir, subject_list):
     if len(fsl_subjectDirs) != len(gt_subjectDirs):
         raise ValueError("Mismatch in number of subjects")
     
-    #Loop over subjects and calculate DSC for fnirt & ground truth pairs
+    # Loop over subjects and calculate DSC for fnirt & ground truth pairs
     for subject_n in range(len(fsl_subjectDirs)):
         fsl_subjectDir = fsl_subjectDirs[subject_n]
-        gt_subjectDir = gt_subjectDirs[subject_n]
         
+        # Load images and extract data in array
         fnirt_mask = nib.load(os.path.join(fsl_subjectDir, "mask_fnirt.nii.gz"))
         flirt_mask = nib.load(os.path.join(fsl_subjectDir, "mask_flirt.nii.gz"))
         fnirt_img  = nib.load(os.path.join(fsl_subjectDir, "bet_fnirt.nii.gz"))
@@ -159,13 +164,13 @@ def get_fsl_metrics(datadir, subject_list):
         flirt_img_array = flirt_img.get_fdata()
 
         
-        #Make FLIRT/FNIRT masks binary
+        # Make FLIRT/FNIRT masks binary
         threshold_indices = fnirt_mask_array != 0
         fnirt_mask_array[threshold_indices] = 1
         threshold_indices = flirt_mask_array != 0
         flirt_mask_array[threshold_indices] = 1
         
-        #Calculate and DSC and append 
+        # Calculate DSC and SSIM then append 
         for i in range(3):
             DSC = getDSC(fnirt_mask_array[:,11+i,:], flirt_mask_array[:,11+i,:])
             SSIM = structural_similarity(flirt_img_array[:,11+i,:], fnirt_img_array[:,11+i,:])
@@ -189,13 +194,13 @@ def evaluate(d_model, g_model, gan_model, dataset, subject_list, time, specific_
             warnings.simplefilter('ignore')
             g_model = load_model(os.path.join(model_dir, 'g_model_{}.h5'.format(specific_model))) # e.g. 0029400  
     
-    #Preprocess test set
+    # Preprocess test set
     true_day4, true_day0 = dataset 
     
-    #Generate registered (fake) day0 images
+    # Generate registered (fake) day0 images
     predicted_day0 = g_model.predict(true_day4.reshape(len(true_day4), 256, 256, 1)) # needs to be 4D
     
-    #Plot results
+    # Plot the results
     SSIM_list = []
     if show_fig : fig, ax = plt.subplots(len(true_day4), 4, figsize=(14, len(true_day4)*3))
     for i in range(len(true_day4)):
@@ -223,12 +228,12 @@ def evaluate(d_model, g_model, gan_model, dataset, subject_list, time, specific_
             ax[i,3].axis('off')
             ax[i,3].set_title('Pred deformation map - rat {}, slice {}'.format(subject_list[i//3][-2:], (i%3) + 1))
 
-        # quantified structural deformation
+        # Quantified structural deformation
         SSIM_def = structural_similarity(pred_d0, true_d4) 
         SSIM_list.append(SSIM_def)
         
         if verbose:
-            print("SSIM (day0 v day0_pred) for slice {}: ".format(i), SSIM) # you want this to be 1
+            print("SSIM (day0 v day0_pred) for slice {}: ".format(i), SSIM)     # you want this to be 1
             print("SSIM (day4 v day0_pred) for slice {}: ".format(i), SSIM_def) # deformation
         
     return SSIM_list
