@@ -152,7 +152,7 @@ def get_fsl_metrics(datadir, subject_list):
     return SSIM_list, DSC_list
 
 
-def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last", verbose=True, show_fig=True):
+def evaluate(d_model, g_model, gan_model, dataset, time, specific_model="last", verbose=False, show_fig=False):
     """"
     Evaluation function for trained GAN
     input: generator model & test set image pairs
