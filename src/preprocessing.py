@@ -5,6 +5,7 @@ import os
 from glob import glob
 from shutil import copyfile
 from tqdm import tqdm
+import time
 
 
 def preprocess_data(datadir, verbose=False):
@@ -14,7 +15,9 @@ def preprocess_data(datadir, verbose=False):
 
     dataDir = os.path.abspath(datadir)
 
-    if verbose : print(f"Performing data preprocessing in directory:\n{dataDir:s}")
+    if verbose: 
+        print(f"Performing data preprocessing in directory:\n{dataDir:s}")
+        time.sleep(1)
 
     # Define current data locations
     rawDir = os.path.join(dataDir, "raw")
