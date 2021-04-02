@@ -10,7 +10,7 @@ import time
 
 def preprocess_data(datadir, verbose=False):
     """
-    This function takes in the raw data and FSL results and restructures them in a convenient data format.
+    This function gets the raw data and the FSL results and restructures them in a convenient data format.
     """
 
     dataDir = os.path.abspath(datadir)
@@ -23,6 +23,7 @@ def preprocess_data(datadir, verbose=False):
     rawDir = os.path.join(dataDir, "raw")
     fslDir = os.path.join(dataDir, "FSL_results")
     
+    # Get day_0, day_4 masks and images
     day0_images = glob(os.path.join(rawDir, "rat*_dwib0_1_bet.nii.gz"))
     day4_images = glob(os.path.join(fslDir, "rat*", "bet_flirt.nii.gz"))
     day0_masks = glob(os.path.join(rawDir, "rat*_adc1f_lesionmask.nii.gz"))
@@ -31,6 +32,7 @@ def preprocess_data(datadir, verbose=False):
     # Define new data locations
     newDir = os.path.join(dataDir, "preprocessed")
 
+    # Copy and rename masks and images to new directory
     day0_images_new = [os.path.join(newDir, os.path.split(old_path)[-1][:5], "day0_img.nii.gz") for old_path in day0_images]
     day4_images_new = [os.path.join(newDir, os.path.split(os.path.dirname(old_path))[-1], "day4_img.nii.gz") for old_path in day4_images]
     day0_masks_new = [os.path.join(newDir, os.path.split(old_path)[-1][:5], "day0_mask.nii.gz") for old_path in day0_masks]
