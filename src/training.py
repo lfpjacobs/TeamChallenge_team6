@@ -14,6 +14,7 @@ import random
 import math
 from tqdm import tqdm
 import warnings
+import time
 from numpy import load
 from numpy import zeros
 from augmentation import augment
@@ -234,6 +235,7 @@ def train(d_model, g_model, gan_model, dataset_train, n_epochs=100, n_batch=4, n
                 
         dataset_aug = [A, B] # all trainingdata (day4 and day1)
         print("Completed")
+        time.sleep(1)
 
         for batch in tqdm(range(bat_per_epo), ascii=True):           
 
