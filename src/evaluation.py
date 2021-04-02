@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import os
 import nibabel as nib
 import pandas as pd
+import seaborn as sns
 from keras.models import load_model
 from skimage.metrics import structural_similarity
 
@@ -26,7 +27,7 @@ def getDSC(testImage, resultImage):
     return 1.0 - scipy.spatial.distance.dice(testArray, resultArray) 
 
 
-def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson'):
+def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson', show_fig=True):
     """
     Calculates correlation matrix for response vectors, DSC and SSIM
     for given subjects. Method is either 'pearson', 'kendall', 'spearman' 
@@ -40,8 +41,11 @@ def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson'):
     #Read response vectors from csv file into dataframe and parse
     filename = os.path.join(datadir, "responsevecs_TC20analysis210113.csv")
     resp_vec = pd.read_csv(filename, sep=',', header=0, index_col=0)
+
+    resp_vec['ID'].apply(int)
+    subjects = [int(subject) for subject in subjects]
     resp_vec = resp_vec.loc[resp_vec['ID'].isin(subjects)]
-    
+
     #Calculate FSL dice scores and SSIM results. Add as columns to dataframe
     SSIM_fsl, DSCs = get_fsl_metrics(datadir, sorted(subject_list)) 
 
@@ -57,49 +61,47 @@ def resp_vec_correlation(datadir, subject_list, SSIM_list, method = 'pearson'):
     #Calculate  and return the correlation matrix
     resp_vec_def = resp_vec_copy.drop('ID', axis=1)
     correlations = resp_vec_def.corr(method)
-    plot_corr(resp_vec_def, correlations)
-    
+
+    if show_fig : plot_corr(resp_vec_def, correlations)
+
     return correlations
 
 def plot_corr(dataframe, correlations):
     """
+    This function generates a figure
     """
-    z=list(dataframe["DSC - FSL"])
-    y=list(dataframe["prepostT1pd_CORE"])
-    x=list(dataframe["ischHLV"])
-    v=list(dataframe["postNDS_sum"])
-    w=list(dataframe["SSIM - GAN"])
     
-    fig = plt.figure()
-    plt.title("Response vector correlations")
-    ax1 = fig.add_subplot(3,2,1)
-    ax1.set_xlabel("DSC")
-    ax1.set_ylabel("ischHLV")
-    ax2 = fig.add_subplot(3,2,3)
-    ax2.set_xlabel("DSC")
-    ax2.set_ylabel("postNDS_sum")
-    ax3 = fig.add_subplot(3,2,5)
-    ax3.set_xlabel("DSC")
-    ax3.set_ylabel("prepostT1pd_CORE")
-    ax4 = fig.add_subplot(3,2,2)
-    ax4.set_xlabel("SSIM")
-    ax4.set_ylabel("ischHLV")
-    ax5 = fig.add_subplot(3,2,4)
-    ax5.set_xlabel("SSIM")
-    ax5.set_ylabel("postNDS_sum")
-    ax6 = fig.add_subplot(3,2,6)
-    ax6.set_xlabel("SSIM")
-    ax6.set_ylabel("prepostT1pd_CORE")
+    # Define relevant data
+    relevant_data = ["SSIM - GAN", "DSC - FSL", "SSIM - FSL", "ischHLV", "prepostT1pd_CORE", "postNDS_sum"]
+
+    # Plot figure
+    dim = len(relevant_data * 5)
+    plt.figure(figsize=(dim, dim))
+
+    color_scale = sns.color_palette("YlOrRd", 100)
+
+    for i in range(len(relevant_data)**2):
+        plt.subplot(len(relevant_data), len(relevant_data), i+1)
+
+        x_pos = (i % (len(relevant_data))) 
+        y_pos = i // len(relevant_data)
+        x_data = relevant_data[x_pos]
+        y_data = relevant_data[y_pos]
+
+        if x_pos != y_pos and not (x_pos > 2 and y_pos > 2):
+            correlation = correlations[x_data][y_data]  
+            sns.scatterplot(x=x_data, y=y_data, data=dataframe, color=".1")
+            sns.regplot(x=x_data, y=y_data, data=dataframe, scatter=False, color=color_scale[min(int(abs(correlation)*150) - 1, 99)])
+        else:
+            plt.xticks([], [])
+            plt.yticks([], [])
+
+    plt.tight_layout()
+    plt.show()
     
-    #plots
-    ax1.scatter(z,x)
-    ax2.scatter(z,v)
-    ax3.scatter(z,y)
-    ax4.scatter(w,x)
-    ax5.scatter(w,v)
-    ax6.scatter(w,y)
     return
-    
+
+
 def get_fsl_metrics(datadir, subject_list):
     """
     Calculates dice similarity coefficients between FNIRT masks and
